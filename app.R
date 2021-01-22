@@ -14,11 +14,21 @@ rm(startpoint)
 ui <- navbarPage("MS2 library",
                  theme = shinythemes::shinytheme("united"),  
                  tabPanel("Table", 
-                          fluidRow(DT::dataTableOutput("table")),
-                          fluidRow(
-                            column(6, plotOutput("eic")),
-                            column(6, plotOutput("ms2"))
-                          )),
+                          sidebarLayout(
+                            sidebarPanel(
+                              sliderInput("intensity", "Relative intensity:",
+                                          min = 0, max = 100,
+                                          value = 10)
+                            ),
+                            mainPanel(
+                              fluidRow(DT::dataTableOutput("table")),
+                              fluidRow(
+                                column(6, plotOutput("eic")),
+                                column(6, plotOutput("ms2"))
+                              )
+                            )
+                          )
+                          ),
                  tabPanel("Correlations",
                           sidebarLayout(
                             sidebarPanel(
@@ -91,7 +101,9 @@ server <- function(input, output) {
         c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
       }
       idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
-      plot(sps$mz[idx], sps$int100[idx], type = "h",
+      sps <- sps[idx,]
+      idx <- which(sps$int100 >= input$intensity)
+      plot(sps$mz, sps$int100, type = "h",
            xlab = "m/z", ylab = "relative intensity", 
            xlim = c(min(sps$mz), max(sps$mz)), ylim = c(0, 110)) 
       text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
