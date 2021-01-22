@@ -16,7 +16,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
 c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 54.3983
+c_rt <- 56.2381
 plot(chr)
 abline(v = c_rt)
 sps <- xdata[[closest(c_rt, rtime(xdata)#, duplicates = "closest"

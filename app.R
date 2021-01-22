@@ -16,6 +16,9 @@ ui <- navbarPage("MS2 library",
                  tabPanel("Table", 
                           sidebarLayout(
                             sidebarPanel(
+                              sliderInput("rt", "RT zoom:",
+                                          min = 0, max = 12,
+                                          value = c(0, 12), step = 0.1),
                               sliderInput("intensity", "Relative intensity:",
                                           min = 0, max = 100,
                                           value = 10)
@@ -72,8 +75,9 @@ server <- function(input, output) {
         int = intensity(chr[[1]])
       )
       c_chr[is.na(c_chr)] <- 0
-      plot(c_chr$rt, y = c_chr$int, type = "l", 
-           xlab = "retention time", ylab = "intensity", main = db$name[i]) 
+      plot(c_chr$rt, y = c_chr$int, type = "l", main = db$name[i], 
+           xlab = "retention time", ylab = "intensity",
+           xlim = c(input$rt[1], input$rt[2])) 
       points(rts/60, c_chr$int[closest(rts/60, c_chr$rt)],
              pch = 16, col = "grey")
       points(rtime(ms2list)/60, c_chr$int[closest(rtime(ms2list)/60, c_chr$rt)],
@@ -105,7 +109,7 @@ server <- function(input, output) {
       idx <- which(sps$int100 >= input$intensity)
       plot(sps$mz, sps$int100, type = "h",
            xlab = "m/z", ylab = "relative intensity", 
-           xlim = c(min(sps$mz), max(sps$mz)), ylim = c(0, 110)) 
+           xlim = c(min(sps$mz)-10, max(sps$mz)+10), ylim = c(0, 110)) 
       text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
@@ -184,14 +188,17 @@ server <- function(input, output) {
     j <- input$spectra_rows_selected
     if (length(j) == 1){
       i <- which(spd$name == tb[j,1])
-      plot(unlist(mz(spd[i])), unlist(intensity(spd[i])), 
+      idx <- which((unlist(intensity(spd[i]))*100)/max(unlist(intensity(spd[i]))) >= input$intensity)
+      plot(unlist(mz(spd[i])), 
+           (unlist(intensity(spd[i]))*100)/max(unlist(intensity(spd[i]))), 
            type = "h", main = db$name[i],
            xlab = "m/z", ylab = "intensity", 
            xlim = c(min(unlist(mz(spd[i])))-10, max(unlist(mz(spd[i])))+10), 
-           ylim = c(0, max(unlist(intensity(spd[i])*1.1)))
+           ylim = c(0, 110)
            ) 
-      text(unlist(mz(spd[i])), unlist(intensity(spd[i])), 
-           sprintf("%.4f", round(unlist(mz(spd[i])), 4)), 
+      text(unlist(mz(spd[i]))[idx], 
+           (unlist(intensity(spd[i]))[idx]*100)/max(unlist(intensity(spd[i]))), 
+           sprintf("%.4f", round(unlist(mz(spd[i]))[idx], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
     })
@@ -217,14 +224,17 @@ server <- function(input, output) {
     }
     if (length(j) == 1){
       i <- which(names == tmp[j,1])
-      plot(ms2clu[[i]]@spectrum[,1], ms2clu[[i]]@spectrum[,2], 
+      idx <- which((ms2clu[[i]]@spectrum[,2]*100)/max(ms2clu[[i]]@spectrum[,2]) >= input$intensity)
+      plot(ms2clu[[i]]@spectrum[,1], 
+           (ms2clu[[i]]@spectrum[,2]*100)/max(ms2clu[[i]]@spectrum[,2]), 
            type = "h", main = ms2clu[[i]]@id,
            xlab = "m/z", ylab = "intensity", 
            xlim = c(min(ms2clu[[i]]@spectrum[,1])-10, max(ms2clu[[i]]@spectrum[,1])+10), 
-           ylim = c(0, max(ms2clu[[i]]@spectrum[,2]*1.1))
+           ylim = c(0, 110)
       ) 
-      text(ms2clu[[i]]@spectrum[,1], ms2clu[[i]]@spectrum[,2], 
-           sprintf("%.4f", round(ms2clu[[i]]@spectrum[,1], 4)), 
+      text(ms2clu[[i]]@spectrum[idx,1], 
+           (ms2clu[[i]]@spectrum[idx,2]*100)/max(ms2clu[[i]]@spectrum[,2]), 
+           sprintf("%.4f", round(ms2clu[[i]]@spectrum[idx,1], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
   })
