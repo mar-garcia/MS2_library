@@ -23,7 +23,7 @@ library(CompoundDb) # matchWithPpm
 db <- read.csv("database.csv")
 spd <- DataFrame(
   msLevel = rep(2L, nrow(db)),
-  polarity = rep(1L, nrow(db)),
+  polarity = as.integer(factor(db$polarity)),
   id = db$abr,
   name = db$name)
 
@@ -45,11 +45,17 @@ for(i in 1:nrow(db)){
     int = unlist(intensity(ms2list))
   )
   c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+  c_frag <- c_frag[!is.na(c_frag)]
   c_frag_mz <- c()
+  if(db$polarity[i] == "POS"){
+    c_add <- "[M+H]+"
+  }else if(db$polarity[i] == "NEG"){
+    c_add <- "[M-H]-"
+  }
   for(j in 1:length(c_frag)){
     c_frag_mz <- c(
       c_frag_mz, 
-      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
   }
   idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
   l_mz[[i]] <- sps$mz[idx][order(sps$mz[idx])]
@@ -70,10 +76,15 @@ c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
 c_rt <- db$RT[i]
 c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
 c_frag_mz <- c()
+if(db$polarity[i] == "POS"){
+    c_add <- "[M+H]+"
+  }else if(db$polarity[i] == "NEG"){
+    c_add <- "[M-H]-"
+  }
 for(j in 1:length(c_frag)){
   c_frag_mz <- c(
     c_frag_mz, 
-    unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+    unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
 }
 ms2clu <- extractMS2spectra(
   paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
@@ -86,6 +97,7 @@ ms2clu@id <- db$name[i]
 ms2clu@annotation <- db$adduct[i]
 idx <- unlist(matchWithPpm(c_frag_mz, ms2clu@spectrum[,1], ppm = 10))
 ms2clu@spectrum <- matrix(ms2clu@spectrum[idx,], ncol = 2)
+ms2clu@polarity <- db$polarity[i]
 
 for(i in 2:nrow(db)){
   c_fml <- db$formula[i]
@@ -93,11 +105,17 @@ for(i in 2:nrow(db)){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
   c_rt <- db$RT[i]
   c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+  c_frag <- c_frag[!is.na(c_frag)]
   c_frag_mz <- c()
+  if(db$polarity[i] == "POS"){
+    c_add <- "[M+H]+"
+  }else if(db$polarity[i] == "NEG"){
+    c_add <- "[M-H]-"
+  }
   for(j in 1:length(c_frag)){
     c_frag_mz <- c(
       c_frag_mz, 
-      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
   }
   ms2clu_i <- extractMS2spectra(
     paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
@@ -105,15 +123,20 @@ for(i in 2:nrow(db)){
     recalibrate_precursor = FALSE)
   ms2clu_i <- unlist(ms2clu_i)
   ms2clu_i <- getSpectrum(ms2clu_i, "precursor", c_mz, mz.tol = 0.01)
-  rts <- c()
-  for(j in 1:length(ms2clu_i)){
-    rts <- c(rts, ms2clu_i[[j]]@rt)
+  if(length(ms2clu_i) > 1){
+    rts <- c()
+    for(j in 1:length(ms2clu_i)){
+      rts <- c(rts, ms2clu_i[[j]]@rt)
+    }
+    ms2clu_i <- ms2clu_i[[closest(c_rt, rts)]]
+  } else{
+    rts <- ms2clu_i@rt
   }
-  ms2clu_i <- ms2clu_i[[closest(c_rt, rts)]]
   ms2clu_i@id <- db$name[i]
   ms2clu_i@annotation <- db$adduct[i]
   idx <- unlist(matchWithPpm(c_frag_mz, ms2clu_i@spectrum[,1], ppm = 10))
   ms2clu_i@spectrum <- matrix(ms2clu_i@spectrum[idx,], ncol = 2)
+  ms2clu_i@polarity <- db$polarity[i]
   
   ms2clu <- c(ms2clu, ms2clu_i)
 }

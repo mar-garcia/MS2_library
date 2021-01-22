@@ -16,7 +16,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
 c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 56.2381
+c_rt <- 225.1019
 plot(chr)
 abline(v = c_rt)
 sps <- xdata[[closest(c_rt, rtime(xdata)#, duplicates = "closest"
@@ -25,7 +25,7 @@ sps <- as.data.frame(sps)
 sps <- sps[c(unlist(matchWithPpm(c_mz, sps$mz, ppm = 15)),
                unlist(matchWithPpm(c_mz + 1.003355, sps$mz, ppm = 15)),
                unlist(matchWithPpm((c_mz + 1.003355*2), sps$mz, ppm = 15))),]
-write.table(sps, paste0("sirius/", db$abr[i], "_FS.txt"), 
+write.table(sps, paste0("sirius/", db$abr[i], "_", db$polarity[i], "_FS.txt"), 
             row.names = FALSE, col.names = FALSE)
 
 
@@ -37,5 +37,5 @@ sps <- data.frame(
   mz = unlist(mz(ms2list)),
   int = unlist(intensity(ms2list))
 )
-write.table(sps, paste0("sirius/", db$abr[i], "_MS2.txt"), 
+write.table(sps, paste0("sirius/", db$abr[i], "_", db$polarity[i], "_MS2.txt"), 
             row.names = FALSE, col.names = FALSE)

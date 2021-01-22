@@ -16,6 +16,9 @@ ui <- navbarPage("MS2 library",
                  tabPanel("Table", 
                           sidebarLayout(
                             sidebarPanel(
+                              selectInput("polarity", label = "Polarity:", 
+                                          choices = list("POS" = "POS", "NEG" = "NEG"), 
+                                          selected = "NEG"),
                               sliderInput("rt", "RT zoom:",
                                           min = 0, max = 12,
                                           value = c(0, 12), step = 0.1),
@@ -52,11 +55,17 @@ ui <- navbarPage("MS2 library",
                  ))
 
 server <- function(input, output) {
+  dbx <- reactive({
+    db <- db[db$polarity == input$polarity,]
+  })
+  
   output$table <- DT::renderDataTable(DT::datatable({
+    db <- dbx()
     db[, c("name", "formula")]
   }, rownames= FALSE))
   
   output$eic <- renderPlot({
+    db <- dbx()
     i <- input$table_rows_selected
     if (length(i) == 1){
       c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, db$adduct[i]))
@@ -86,6 +95,7 @@ server <- function(input, output) {
   })
   
   output$ms2 <- renderPlot({
+    db <- dbx()
     i <- input$table_rows_selected
     if (length(i) == 1){
       c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, db$adduct[i]))
@@ -100,19 +110,28 @@ server <- function(input, output) {
       )
       sps$int100 <- (sps$int*100) / max(sps$int)
       c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+      c_frag <- c_frag[!is.na(c_frag)]
       c_frag_mz <- c()
-      for(j in 1:length(c_frag)){
-        c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+      if(db$polarity[i] == "POS"){
+        for(j in 1:length(c_frag)){
+          c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M+H]+")))
+        }
+      }else if(db$polarity[i] == "NEG"){
+        for(j in 1:length(c_frag)){
+          c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+        }
       }
       idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
-      sps <- sps[idx,]
-      idx <- which(sps$int100 >= input$intensity)
-      plot(sps$mz, sps$int100, type = "h",
-           xlab = "m/z", ylab = "relative intensity", 
-           xlim = c(min(sps$mz)-10, max(sps$mz)+10), ylim = c(0, 110)) 
-      text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
-           offset = -1, pos = 2, srt = -30)
-    }
+      if(length(idx) > 0){
+        sps <- sps[idx,]
+        idx <- which(sps$int100 >= input$intensity)
+        plot(sps$mz, sps$int100, type = "h",
+             xlab = "m/z", ylab = "relative intensity", 
+             xlim = c(min(sps$mz)-10, max(sps$mz)+10), ylim = c(0, 110)) 
+        text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
+             offset = -1, pos = 2, srt = -30)
+      }
+    } 
   })
   
   output$spectra <- DT::renderDataTable(DT::datatable({
@@ -126,7 +145,10 @@ server <- function(input, output) {
     x_spd$mz <- list(df[,1])
     x_spd$intensity <- list(df[,2])
     x_spd <- Spectra(x_spd)
-    c_spd <- c(x_spd, spd)
+    spdx <- filterPolarity(
+      spd, 
+      which(factor(c(1,2), labels = c("NEG", "POS")) == input$polarity))
+    c_spd <- c(x_spd, spdx)
     tb <- cbind(c_spd$name[order(Spectra::compareSpectra(
       c_spd, ppm = 50)[,1], decreasing = T)], 
       Spectra::compareSpectra(c_spd, ppm = 50)[,1][order(
@@ -141,16 +163,18 @@ server <- function(input, output) {
   output$clumsid <- DT::renderDataTable(DT::datatable({
     req(input$file1)
     df <- read.table(input$file1$datapath)
+    ms2clux <- ms2clu[lapply(ms2clu, "slot", "polarity") == input$polarity]
+    
     ms2clu_i@id <- "x"
     ms2clu_i@annotation <- "x"
     ms2clu_i@precursor <- 1000
     ms2clu_i@rt <- 500
     ms2clu_i@polarity <- "x"
     ms2clu_i@spectrum <- cbind(df[,1], df[,2])
-    tmp <- matrix((getSimilarities(ms2clu_i, ms2clu)[order(
-      getSimilarities(ms2clu_i, ms2clu), decreasing = T)]), ncol = 1)
-    tmp <- cbind(names((getSimilarities(ms2clu_i, ms2clu)[order(
-      getSimilarities(ms2clu_i, ms2clu), decreasing = T)])), tmp)
+    tmp <- matrix((getSimilarities(ms2clu_i, ms2clux)[order(
+      getSimilarities(ms2clu_i, ms2clux), decreasing = T)]), ncol = 1)
+    tmp <- cbind(names((getSimilarities(ms2clu_i, ms2clux)[order(
+      getSimilarities(ms2clu_i, ms2clux), decreasing = T)])), tmp)
     colnames(tmp) <- c("name", "corr")
     tmp[,2] <- sprintf("%.3f", round(as.numeric(tmp[,2]), 3))
     return(tmp)
@@ -176,7 +200,10 @@ server <- function(input, output) {
     x_spd$mz <- list(df[,1])
     x_spd$intensity <- list(df[,2])
     x_spd <- Spectra(x_spd)
-    c_spd <- c(x_spd, spd)
+    spdx <- filterPolarity(
+      spd, 
+      which(factor(c(1,2), labels = c("NEG", "POS")) == input$polarity))
+    c_spd <- c(x_spd, spdx)
     tb <- cbind(c_spd$name[order(Spectra::compareSpectra(
       c_spd, ppm = 50)[,1], decreasing = T)], 
       Spectra::compareSpectra(c_spd, ppm = 50)[,1][order(
@@ -205,36 +232,37 @@ server <- function(input, output) {
   
   output$ms2_clumsid <- renderPlot({
     df <- read.table(input$file1$datapath)
+    ms2clux <- ms2clu[lapply(ms2clu, "slot", "polarity") == input$polarity]
     ms2clu_i@id <- "x"
     ms2clu_i@annotation <- "x"
     ms2clu_i@precursor <- 1000
     ms2clu_i@rt <- 500
     ms2clu_i@polarity <- "x"
     ms2clu_i@spectrum <- cbind(df[,1], df[,2])
-    tmp <- matrix((getSimilarities(ms2clu_i, ms2clu)[order(
-      getSimilarities(ms2clu_i, ms2clu), decreasing = T)]), ncol = 1)
-    tmp <- cbind(names((getSimilarities(ms2clu_i, ms2clu)[order(
-      getSimilarities(ms2clu_i, ms2clu), decreasing = T)])), tmp)
+    tmp <- matrix((getSimilarities(ms2clu_i, ms2clux)[order(
+      getSimilarities(ms2clu_i, ms2clux), decreasing = T)]), ncol = 1)
+    tmp <- cbind(names((getSimilarities(ms2clu_i, ms2clux)[order(
+      getSimilarities(ms2clu_i, ms2clux), decreasing = T)])), tmp)
     colnames(tmp) <- c("name", "corr")
     tmp[,2] <- sprintf("%.3f", round(as.numeric(tmp[,2]), 3))
     j <- input$clumsid_rows_selected
     names <- c()
-    for(k in 1:length(ms2clu)){
-      names <- c(names, ms2clu[[k]]@id)
+    for(k in 1:length(ms2clux)){
+      names <- c(names, ms2clux[[k]]@id)
     }
     if (length(j) == 1){
       i <- which(names == tmp[j,1])
-      idx <- which((ms2clu[[i]]@spectrum[,2]*100)/max(ms2clu[[i]]@spectrum[,2]) >= input$intensity)
-      plot(ms2clu[[i]]@spectrum[,1], 
-           (ms2clu[[i]]@spectrum[,2]*100)/max(ms2clu[[i]]@spectrum[,2]), 
-           type = "h", main = ms2clu[[i]]@id,
+      idx <- which((ms2clux[[i]]@spectrum[,2]*100)/max(ms2clux[[i]]@spectrum[,2]) >= input$intensity)
+      plot(ms2clux[[i]]@spectrum[,1], 
+           (ms2clux[[i]]@spectrum[,2]*100)/max(ms2clux[[i]]@spectrum[,2]), 
+           type = "h", main = ms2clux[[i]]@id,
            xlab = "m/z", ylab = "intensity", 
-           xlim = c(min(ms2clu[[i]]@spectrum[,1])-10, max(ms2clu[[i]]@spectrum[,1])+10), 
+           xlim = c(min(ms2clux[[i]]@spectrum[,1])-10, max(ms2clux[[i]]@spectrum[,1])+10), 
            ylim = c(0, 110)
       ) 
-      text(ms2clu[[i]]@spectrum[idx,1], 
-           (ms2clu[[i]]@spectrum[idx,2]*100)/max(ms2clu[[i]]@spectrum[,2]), 
-           sprintf("%.4f", round(ms2clu[[i]]@spectrum[idx,1], 4)), 
+      text(ms2clux[[i]]@spectrum[idx,1], 
+           (ms2clux[[i]]@spectrum[idx,2]*100)/max(ms2clux[[i]]@spectrum[,2]), 
+           sprintf("%.4f", round(ms2clux[[i]]@spectrum[idx,1], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
   })
