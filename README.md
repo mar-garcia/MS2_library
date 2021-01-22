@@ -1,2 +1,2 @@
-# MS2_library
-This repo contains codes &amp; a shiny app for creating an in-house MS2 library
+# MS2 library
+This repo contains codes & a shiny app for creating an in-house MS2 library
