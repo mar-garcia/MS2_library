@@ -35,9 +35,10 @@ for(i in 1:nrow(db)){
   c_add <- db$adduct[i]
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
   c_rt <- db$RT[i]
-  xdata <- Spectra(paste0("mzML/", db$file[i], ".mzML"), 
+  xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                    backend = MsBackendMzR())
-  ms2list <- filterPrecursorMz(object = xdata, mz = c_mz + 0.01 * c(-1, 1))
+  ms2list <- filterPrecursorMz(object = xdata, 
+                               mz = c_mz + 0.01 * c(-1, 1))
   ms2list <- ms2list[closest(c_rt, rtime(ms2list))]
   sps <- data.frame(
     mz = unlist(mz(ms2list)),
@@ -46,7 +47,9 @@ for(i in 1:nrow(db)){
   c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
   c_frag_mz <- c()
   for(j in 1:length(c_frag)){
-    c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+    c_frag_mz <- c(
+      c_frag_mz, 
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
   }
   idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
   l_mz[[i]] <- sps$mz[idx][order(sps$mz[idx])]
@@ -68,11 +71,14 @@ c_rt <- db$RT[i]
 c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
 c_frag_mz <- c()
 for(j in 1:length(c_frag)){
-  c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+  c_frag_mz <- c(
+    c_frag_mz, 
+    unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
 }
-ms2clu <- extractMS2spectra(paste0("mzML/", db$file[i], ".mzML"),
-                  min_peaks = 2,
-                  recalibrate_precursor = FALSE)
+ms2clu <- extractMS2spectra(
+  paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
+  min_peaks = 2,
+  recalibrate_precursor = FALSE)
 ms2clu <- unlist(ms2clu)
 ms2clu <- getSpectrum(ms2clu, "precursor", c_mz, mz.tol = 0.01)
 ms2clu <- getSpectrum(ms2clu, "rt", c_rt, rt.tol = 2)
@@ -89,11 +95,14 @@ for(i in 2:nrow(db)){
   c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
   c_frag_mz <- c()
   for(j in 1:length(c_frag)){
-    c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+    c_frag_mz <- c(
+      c_frag_mz, 
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
   }
-  ms2clu_i <- extractMS2spectra(paste0("mzML/", db$file[i], ".mzML"),
-                                min_peaks = 2,
-                                recalibrate_precursor = FALSE)
+  ms2clu_i <- extractMS2spectra(
+    paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
+    min_peaks = 2,
+    recalibrate_precursor = FALSE)
   ms2clu_i <- unlist(ms2clu_i)
   ms2clu_i <- getSpectrum(ms2clu_i, "precursor", c_mz, mz.tol = 0.01)
   rts <- c()
