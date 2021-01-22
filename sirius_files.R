@@ -1,4 +1,3 @@
-setwd("~/Mar/stds_library")
 library(xcms)
 library(Rdisop)
 library(MetaboCoreUtils)
