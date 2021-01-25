@@ -19,6 +19,19 @@ ui <- navbarPage("MS2 library",
                               selectInput("polarity", label = "Polarity:", 
                                           choices = list("POS" = "POS", "NEG" = "NEG"), 
                                           selected = "NEG"),
+                              fluidRow(
+                                column(3,
+                                       numericInput(inputId = "mz",
+                                                    label = "m/z value:",
+                                                    value = 500,
+                                                    step = 0.0001)),
+                                
+                                column(3, 
+                                       numericInput(inputId = "ppm",
+                                                    label = "ppm:",
+                                                    value = 1000000,
+                                                    step = 1)),
+                                column(3, actionButton("button", "Filter by m/z"))),
                               sliderInput("rt", "RT zoom:",
                                           min = 0, max = 12,
                                           value = c(0, 12), step = 0.1),
@@ -57,6 +70,10 @@ ui <- navbarPage("MS2 library",
 server <- function(input, output) {
   dbx <- reactive({
     db <- db[db$polarity == input$polarity,]
+    input$button
+    isolate(
+      db <- db[(db$mz > input$mz - ppm(input$mz, input$ppm)) & 
+                 (db$mz < input$mz + ppm(input$mz, input$ppm)),])
   })
   
   output$table <- DT::renderDataTable(DT::datatable({

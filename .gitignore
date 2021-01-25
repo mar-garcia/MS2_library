@@ -1,6 +1,7 @@
 mzmL/*
 sirius/*
 *.csv
+*.csv#
 *.html
 *.RData
 *.txt
