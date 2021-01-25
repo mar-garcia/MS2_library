@@ -72,8 +72,8 @@ server <- function(input, output) {
     db <- db[db$polarity == input$polarity,]
     input$button
     isolate(
-      db <- db[(db$mz > input$mz - ppm(input$mz, input$ppm)) & 
-                 (db$mz < input$mz + ppm(input$mz, input$ppm)),])
+      db <- db[(db$mz > input$mz - MsCoreUtils::ppm(input$mz, input$ppm)) & 
+                 (db$mz < input$mz + MsCoreUtils::ppm(input$mz, input$ppm)),])
   })
   
   output$table <- DT::renderDataTable(DT::datatable({
@@ -123,22 +123,26 @@ server <- function(input, output) {
         mz = unlist(mz(ms2list)),
         int = unlist(intensity(ms2list))
       )
-      sps$int100 <- (sps$int*100) / max(sps$int)
       c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
       c_frag <- c_frag[!is.na(c_frag)]
       c_frag_mz <- c()
       if(db$polarity[i] == "POS"){
         for(j in 1:length(c_frag)){
-          c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M+H]+")))
+          c_frag_mz <- c(
+            c_frag_mz, 
+            unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M+H]+")))
         }
       }else if(db$polarity[i] == "NEG"){
         for(j in 1:length(c_frag)){
-          c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
+          c_frag_mz <- c(
+            c_frag_mz, 
+            unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
         }
       }
       idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
       if(length(idx) > 0){
         sps <- sps[idx,]
+        sps$int100 <- (sps$int*100) / max(sps$int)
         idx <- which(sps$int100 >= input$intensity)
         plot(sps$mz, sps$int100, type = "h",
              xlab = "m/z", ylab = "relative intensity", 
