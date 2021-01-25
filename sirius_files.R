@@ -13,10 +13,15 @@ c_add <- db$adduct[i]
 
 xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                     mode = "onDisk")
-c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
+if(c_add == "[M-H-(H2O)2-CO2]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-"))
+  c_mz <- unlist(mass2mz(c_mz, "[M-H-CO2]-")) + 1.007276
+} else {
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
+}
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 225.1019
+c_rt <- db$RT[i]#74.5709
 plot(chr)
 abline(v = c_rt)
 sps <- xdata[[closest(c_rt, rtime(xdata)#, duplicates = "closest"
@@ -39,3 +44,9 @@ sps <- data.frame(
 )
 write.table(sps, paste0("sirius/", db$abr[i], "_", db$polarity[i], "_MS2.txt"), 
             row.names = FALSE, col.names = FALSE)
+
+
+
+plotSpectra(ms2list, main = sps$name,
+            labels = function(z) format(mz(z)[[1L]], digits = 4),
+            labelSrt = -30, labelPos = 2, labelOffset = 0.1)

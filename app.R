@@ -61,24 +61,23 @@ server <- function(input, output) {
   
   output$table <- DT::renderDataTable(DT::datatable({
     db <- dbx()
-    db[, c("name", "formula")]
+    db$mz <- sprintf("%.5f", round(db$mz, 5))
+    db[, c("name", "formula", "adduct", "mz")]
   }, rownames= FALSE))
   
   output$eic <- renderPlot({
     db <- dbx()
     i <- input$table_rows_selected
     if (length(i) == 1){
-      c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, db$adduct[i]))
-      
       xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                        backend = MsBackendMzR())
-      ms2list <- filterPrecursorMz(object = xdata, mz = c_mz + 0.01 * c(-1, 1))
+      ms2list <- filterPrecursorMz(object = xdata, mz = db$mz[i] + 0.01 * c(-1, 1))
       rts <- rtime(ms2list)
       ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
       
       xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                           mode = "onDisk")
-      chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
+      chr <- chromatogram(xdata, mz = db$mz[i] + 0.01 * c(-1, 1))
       c_chr <- data.frame(
         rt = rtime(chr[[1]])/60,
         int = intensity(chr[[1]])
@@ -98,10 +97,9 @@ server <- function(input, output) {
     db <- dbx()
     i <- input$table_rows_selected
     if (length(i) == 1){
-      c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, db$adduct[i]))
       xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                        backend = MsBackendMzR())
-      ms2list <- filterPrecursorMz(object = xdata, mz = c_mz + 0.01 * c(-1, 1))
+      ms2list <- filterPrecursorMz(object = xdata, mz = db$mz[i] + 0.01 * c(-1, 1))
       rts <- rtime(ms2list)
       ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
       sps <- data.frame(
@@ -127,7 +125,8 @@ server <- function(input, output) {
         idx <- which(sps$int100 >= input$intensity)
         plot(sps$mz, sps$int100, type = "h",
              xlab = "m/z", ylab = "relative intensity", 
-             xlim = c(min(sps$mz)-10, max(sps$mz)+10), ylim = c(0, 110)) 
+             xlim = c(min(sps$mz)-10, max(sps$mz)+10), 
+             ylim = c(0, 110)) 
         text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
              offset = -1, pos = 2, srt = -30)
       }
