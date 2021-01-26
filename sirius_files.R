@@ -7,6 +7,7 @@ library(CompoundDb)
 
 db <- read.csv("database.csv")
 db$adduct <- gsub("M-H-hexose", "M-H-Hexose-H2O", db$adduct)
+db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
 i <- nrow(db)
 
 c_fml <- db$formula[i]
@@ -27,7 +28,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 482.9711
+c_rt <- 49.3
 dev.off()
 plot(chr, xlim = c(c_rt - 30, c_rt + 30))
 abline(v = c_rt)
