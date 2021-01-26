@@ -6,7 +6,7 @@ library(Spectra)
 library(CompoundDb)
 
 db <- read.csv("database.csv")
-db$adduct <- gsub("M-H-hexose", "M-H-Hexose-H2O", db$adduct)
+db$adduct <- gsub("M-H-hexose]", "M-H-Hexose-H2O]", db$adduct)
 db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
 i <- nrow(db)
 
@@ -17,9 +17,23 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M+H-CH3]+"){
   c_mz <- getMolecule(c_fml)$exactmass + 1.007276 - getMolecule("CH3")$exactmass
 } else if(c_add == "[M+H-CH3-CO]+"){
-  c_mz <- getMolecule(c_fml)$exactmass + 1.007276 - getMolecule("CH3")$exactmass - getMolecule("CO")$exactmass
+  c_mz <- getMolecule(c_fml)$exactmass + 1.007276 - getMolecule("CH3")$exactmass - 
+    getMolecule("CO")$exactmass
 } else if(c_add == "[M-H-(H2O)2-CO2]-"){
-  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 43.98982926
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 
+    getMolecule("CO2")$exactmass
+} else if(c_add == "[M-H-(H2O)2-C3H2O]-" | c_add == "[M-H-(H2O)2-CO-C2H2]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 
+    getMolecule("C3H2O")$exactmass
+} else if(c_add == "[M-H-hexose-H2O]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-Hexose-H2O]-")) - 
+    getMolecule("H2O")$exactmass
+} else if(c_add == "[M-H-(hexose)2]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
+    getMolecule("C6H10O5")$exactmass*2
+} else if(c_add == "[M-H-C10H18O9]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
+    getMolecule("C10H18O9")$exactmass
 } else {
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
 }

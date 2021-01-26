@@ -21,7 +21,7 @@ library(MsCoreUtils) # closest
 library(CompoundDb) # matchWithPpm 
 
 db <- read.csv("database.csv")
-db$adduct <- gsub("M-H-hexose", "M-H-Hexose-H2O", db$adduct)
+db$adduct <- gsub("M-H-hexose]", "M-H-Hexose-H2O]", db$adduct)
 db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
 db$mz <- NA
 for(i in 1:nrow(db)){
@@ -38,7 +38,17 @@ for(i in 1:nrow(db)){
     db$mz[i] <- unlist(mass2mz(
       getMolecule(db$formula[i])$exactmass, "[M-H-(H2O)2]-")) -
       getMolecule("CO2")$exactmass
-  } else {
+  } else if(db$adduct[i] == "[M-H-hexose-H2O]-"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M-H-Hexose-H2O]-")) - 
+      getMolecule("H2O")$exactmass
+  } else if(db$adduct[i] == "[M-H-(hexose)2]-"){
+    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
+      getMolecule("C6H10O5")$exactmass*2
+  } else if(db$adduct[i] == "[M-H-C10H18O9]-"){
+    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
+      getMolecule("C10H18O9")$exactmass
+  }else {
     db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
                                db$adduct[i]))
   }
@@ -87,6 +97,7 @@ for(i in 1:nrow(db)){
 spd$mz <- l_mz
 spd$intensity <- l_intensity
 spd <- Spectra(spd)
+spd <- spd[order(rtime(spd))]
 rm(l_mz, l_intensity, j, idx, sps, xdata, ms2list,
    c_frag, c_frag_mz)
 
