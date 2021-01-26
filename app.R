@@ -47,7 +47,7 @@ ui <- navbarPage("MS2 library",
                               )
                             )
                           )
-                          ),
+                 ),
                  tabPanel("Correlations",
                           sidebarLayout(
                             sidebarPanel(
@@ -55,8 +55,8 @@ ui <- navbarPage("MS2 library",
                               fluidRow(plotOutput("ms2_x"))),
                             mainPanel(
                               fluidRow(
-                              column(6, DT::dataTableOutput("spectra")),
-                              column(6, DT::dataTableOutput("clumsid"))),
+                                column(6, DT::dataTableOutput("spectra")),
+                                column(6, DT::dataTableOutput("clumsid"))),
                               fluidRow(
                                 column(6, plotOutput("ms2_spectra")),
                                 column(6, plotOutput("ms2_clumsid"))
@@ -114,43 +114,20 @@ server <- function(input, output) {
     db <- dbx()
     i <- input$table_rows_selected
     if (length(i) == 1){
-      xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
-                       backend = MsBackendMzR())
-      ms2list <- filterPrecursorMz(object = xdata, mz = db$mz[i] + 0.01 * c(-1, 1))
-      rts <- rtime(ms2list)
+      ms2list <- filterPrecursorMz(object = spd, mz = db$mz[i] + 0.01 * c(-1, 1))
       ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
       sps <- data.frame(
         mz = unlist(mz(ms2list)),
         int = unlist(intensity(ms2list))
       )
-      c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
-      c_frag <- c_frag[!is.na(c_frag)]
-      c_frag_mz <- c()
-      if(db$polarity[i] == "POS"){
-        for(j in 1:length(c_frag)){
-          c_frag_mz <- c(
-            c_frag_mz, 
-            unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M+H]+")))
-        }
-      }else if(db$polarity[i] == "NEG"){
-        for(j in 1:length(c_frag)){
-          c_frag_mz <- c(
-            c_frag_mz, 
-            unlist(mass2mz(getMolecule(c_frag[j])$exactmass, "[M-H]-")))
-        }
-      }
-      idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
-      if(length(idx) > 0){
-        sps <- sps[idx,]
-        sps$int100 <- (sps$int*100) / max(sps$int)
-        idx <- which(sps$int100 >= input$intensity)
-        plot(sps$mz, sps$int100, type = "h",
-             xlab = "m/z", ylab = "relative intensity", 
-             xlim = c(min(sps$mz)-10, max(sps$mz)+10), 
-             ylim = c(0, 110)) 
-        text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
-             offset = -1, pos = 2, srt = -30)
-      }
+      sps$int100 <- (sps$int*100) / max(sps$int)
+      idx <- which(sps$int100 >= input$intensity)
+      plot(sps$mz, sps$int100, type = "h",
+           xlab = "m/z", ylab = "relative intensity", 
+           xlim = c(min(sps$mz)-10, max(sps$mz)+10), 
+           ylim = c(0, 110)) 
+      text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
+           offset = -1, pos = 2, srt = -30)
     } 
   })
   
@@ -242,13 +219,13 @@ server <- function(input, output) {
            xlab = "m/z", ylab = "intensity", 
            xlim = c(min(unlist(mz(spd[i])))-10, max(unlist(mz(spd[i])))+10), 
            ylim = c(0, 110)
-           ) 
+      ) 
       text(unlist(mz(spd[i]))[idx], 
            (unlist(intensity(spd[i]))[idx]*100)/max(unlist(intensity(spd[i]))), 
            sprintf("%.4f", round(unlist(mz(spd[i]))[idx], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
-    })
+  })
   
   output$ms2_clumsid <- renderPlot({
     df <- read.table(input$file1$datapath)

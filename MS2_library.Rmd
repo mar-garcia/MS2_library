@@ -35,7 +35,9 @@ for(i in 1:nrow(db)){
 
 spd <- DataFrame(
   msLevel = rep(2L, nrow(db)),
+  rtime = NA,
   polarity = as.integer(factor(db$polarity)),
+  precursorMz = NA,
   id = db$abr,
   name = db$name)
 
@@ -48,6 +50,8 @@ for(i in 1:nrow(db)){
   ms2list <- filterPrecursorMz(object = xdata, 
                                mz = db$mz[i] + 0.01 * c(-1, 1))
   ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
+  spd$rtime[i] <- rtime(ms2list)
+  spd$precursorMz[i] <- precursorMz(ms2list)
   sps <- data.frame(
     mz = unlist(mz(ms2list)),
     int = unlist(intensity(ms2list))
