@@ -1,5 +1,6 @@
 library(CluMSID)
 library(xcms)
+library(Spectra)
 
 mzXMLfiles <- list.files("tmp/")
 spectras <- lapply(paste0("tmp/", mzXMLfiles), 
@@ -9,7 +10,7 @@ spectras <- lapply(paste0("tmp/", mzXMLfiles),
                                        recalibrate_precursor = FALSE)
                    })
 
-ms2list <- unlist(spectras)
+ms2spectras <- unlist(spectras)
 
 muestra <- NA
 for(i in 1:length(spectras)){
@@ -19,14 +20,14 @@ for(i in 1:length(spectras)){
 }
 muestra <- muestra[!is.na(muestra)]
 for(i in 1:length(muestra)){
-  slot(ms2list[[i]], "annotation") <- gsub(".*\\/", "", muestra[i])
+  slot(ms2spectras[[i]], "annotation") <- gsub(".*\\/", "", muestra[i])
 }
 
 
-c_mz <- 191.0197
-c_rt <- 1.2*60
+c_mz <- 181.0718
+c_rt <- 0.82*60
 
-ms2sub <- getSpectrum(ms2list, "precursor", c_mz, mz.tol = 0.001) #(5*mz)/1e6
+ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.1) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
 
 if(length(ms2sub) > 1){
@@ -75,3 +76,20 @@ if(length(ms2sub) > 30){
   abline(v=ms2sub@rt)
   specplot(ms2sub)
 }
+
+
+#############################################
+
+i <- 1
+sp_xdata <- Spectra(paste0("tmp/", mzXMLfiles[i]), 
+                 backend = MsBackendMzR())
+for(i in 2:length(mzXMLfiles)){
+  sp_xdata <- c(sp_xdata, Spectra(paste0("tmp/", mzXMLfiles[i]), 
+                            backend = MsBackendMzR()))
+}
+
+c_mz <- 101.0245
+c_rt <- 0.82*60
+sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
+sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 10 * c(-1, 1))
+length(sp_ms2list)
