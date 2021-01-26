@@ -24,13 +24,16 @@ db <- read.csv("database.csv")
 db$adduct <- gsub("M-H-hexose", "M-H-Hexose-H2O", db$adduct)
 db$mz <- NA
 for(i in 1:nrow(db)){
-  if(db$adduct[i] == "[M-H-(H2O)2-CO2]-"){
-  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
-                             "[M-H-(H2O)2]-")) - 43.98983
-} else {
-  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
-                             db$adduct[i]))
-}
+  if(db$adduct[i] == "[M-H-CH3]-"){
+    db$mz[i] <- getMolecule(db$formula[i])$exactmass - 1.007276 -
+      getMolecule("CH3")$exactmass
+  } else if(db$adduct[i] == "[M-H-(H2O)2-CO2]-"){
+    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
+                               "[M-H-(H2O)2]-")) - 43.98983
+  } else {
+    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
+                               db$adduct[i]))
+  }
 }
 
 spd <- DataFrame(
