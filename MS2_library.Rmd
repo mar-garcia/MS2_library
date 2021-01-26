@@ -144,16 +144,18 @@ for(i in 2:nrow(db)){
       rts <- c(rts, ms2clu_i[[j]]@rt)
     }
     ms2clu_i <- ms2clu_i[[closest(db$RT[i], rts)]]
-  } else{
+  } else if(length(ms2clu_i) == 1){
     rts <- ms2clu_i@rt
   }
-  ms2clu_i@id <- db$name[i]
-  ms2clu_i@annotation <- db$adduct[i]
-  idx <- unlist(matchWithPpm(c_frag_mz, ms2clu_i@spectrum[,1], ppm = 10))
-  ms2clu_i@spectrum <- matrix(ms2clu_i@spectrum[idx,], ncol = 2)
-  ms2clu_i@polarity <- db$polarity[i]
-  
-  ms2clu <- c(ms2clu, ms2clu_i)
+  if(length(ms2clu_i) == 1){
+    ms2clu_i@id <- db$name[i]
+    ms2clu_i@annotation <- db$adduct[i]
+    idx <- unlist(matchWithPpm(c_frag_mz, ms2clu_i@spectrum[,1], ppm = 10))
+    ms2clu_i@spectrum <- matrix(ms2clu_i@spectrum[idx,], ncol = 2)
+    ms2clu_i@polarity <- db$polarity[i]
+    
+    ms2clu <- c(ms2clu, ms2clu_i) 
+  }
 }
 rm(i, j, idx, c_fml, c_frag, c_frag_mz, rts)
 
