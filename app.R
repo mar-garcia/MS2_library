@@ -63,8 +63,35 @@ ui <- navbarPage("MS2 library",
                               )
                             ))),
                  navbarMenu("More",
-                            tabPanel("Summary", "Summary tab contents..."),
-                            tabPanel("Table", "Table tab contents...")
+                            tabPanel("Find fragment", 
+                                     h3("Find spectra that contain a specific fragment ion"),
+                                     sidebarPanel(
+                                       numericInput(inputId = "frag_mz",
+                                                    label = "m/z value:",
+                                                    value = 153.0557,
+                                                    step = 0.0001),
+                                       numericInput(inputId = "frag_tol",
+                                                    label = "tolerance:",
+                                                    value = 0.01,
+                                                    step = 0.001)),
+                                     mainPanel(
+                                       verbatimTextOutput("frag_value")
+                                     )),
+                            tabPanel("Find loss", 
+                                     h3("Find spectra that contain a specific neutral loss
+"),
+                                     sidebarPanel(
+                                       numericInput(inputId = "loss_mz",
+                                                    label = "m/z value:",
+                                                    value = 162.0528,
+                                                    step = 0.0001),
+                                       numericInput(inputId = "loss_tol",
+                                                    label = "tolerance:",
+                                                    value = 0.01,
+                                                    step = 0.001)),
+                                     mainPanel(
+                                       verbatimTextOutput("loss_value")
+                                     ))
                  ))
 
 server <- function(input, output) {
@@ -262,6 +289,14 @@ server <- function(input, output) {
            sprintf("%.4f", round(ms2clux[[i]]@spectrum[idx,1], 4)), 
            offset = -1, pos = 2, srt = -30)
     }
+  })
+  
+  output$frag_value <- renderPrint({ 
+    findFragment(ms2clu, mz = input$frag_mz, tolerance = input$frag_tol)
+    })
+  
+  output$loss_value <- renderPrint({ 
+    findNL(ms2clu_nl, mz = input$loss_mz, tolerance = input$loss_tol)
   })
 }
 

@@ -148,6 +148,8 @@ rm(i, j, idx, c_fml, c_frag, c_frag_mz, rts)
 
 ####################################
 
+ms2clu_nl <- mergeMS2spectra(ms2clu)
+
 save.image("MS2_library.RData")
 ```
 
