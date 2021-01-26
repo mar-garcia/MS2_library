@@ -11,88 +11,88 @@ library(xcms)
 load("MS2_library.RData")
 rm(startpoint)
 
-ui <- navbarPage("MS2 library",
-                 theme = shinythemes::shinytheme("united"),  
-                 tabPanel("Table", 
-                          sidebarLayout(
-                            sidebarPanel(
-                              selectInput("polarity", label = "Polarity:", 
-                                          choices = list("POS" = "POS", "NEG" = "NEG"), 
-                                          selected = "NEG"),
-                              fluidRow(
-                                column(3,
-                                       numericInput(inputId = "mz",
-                                                    label = "m/z value:",
-                                                    value = 500,
-                                                    step = 0.0001)),
-                                
-                                column(3, 
-                                       numericInput(inputId = "ppm",
-                                                    label = "ppm:",
-                                                    value = 1000000,
-                                                    step = 1)),
-                                column(3, actionButton("button", "Filter by m/z"))),
-                              sliderInput("rt", "RT zoom:",
-                                          min = 0, max = 12,
-                                          value = c(0, 12), step = 0.1),
-                              sliderInput("intensity", "Relative intensity:",
-                                          min = 0, max = 100,
-                                          value = 10)
-                            ),
-                            mainPanel(
-                              fluidRow(DT::dataTableOutput("table")),
-                              fluidRow(
-                                column(6, plotOutput("eic")),
-                                column(6, plotOutput("ms2"))
-                              )
-                            )
-                          )
-                 ),
-                 tabPanel("Correlations",
-                          sidebarLayout(
-                            sidebarPanel(
-                              fluidRow(fileInput("file1", "Choose TXT file")),
-                              fluidRow(plotOutput("ms2_x"))),
-                            mainPanel(
-                              fluidRow(
-                                column(6, DT::dataTableOutput("spectra")),
-                                column(6, DT::dataTableOutput("clumsid"))),
-                              fluidRow(
-                                column(6, plotOutput("ms2_spectra")),
-                                column(6, plotOutput("ms2_clumsid"))
-                              )
-                            ))),
-                 navbarMenu("More",
-                            tabPanel("Find fragment", 
-                                     h3("Find spectra that contain a specific fragment ion"),
-                                     sidebarPanel(
-                                       numericInput(inputId = "frag_mz",
-                                                    label = "m/z value:",
-                                                    value = 153.0557,
-                                                    step = 0.0001),
-                                       numericInput(inputId = "frag_tol",
-                                                    label = "tolerance:",
-                                                    value = 0.01,
-                                                    step = 0.001)),
-                                     mainPanel(
-                                       verbatimTextOutput("frag_value")
-                                     )),
-                            tabPanel("Find loss", 
-                                     h3("Find spectra that contain a specific neutral loss
-"),
-                                     sidebarPanel(
-                                       numericInput(inputId = "loss_mz",
-                                                    label = "m/z value:",
-                                                    value = 162.0528,
-                                                    step = 0.0001),
-                                       numericInput(inputId = "loss_tol",
-                                                    label = "tolerance:",
-                                                    value = 0.01,
-                                                    step = 0.001)),
-                                     mainPanel(
-                                       verbatimTextOutput("loss_value")
-                                     ))
-                 ))
+ui <- navbarPage(
+  "MS2 library",
+  theme = shinythemes::shinytheme("united"),  
+  tabPanel("Table", 
+           sidebarLayout(
+             sidebarPanel(
+               selectInput("polarity", label = "Polarity:", 
+                           choices = list("POS" = "POS", "NEG" = "NEG"), 
+                           selected = "NEG"),
+               fluidRow(
+                 column(3,
+                        numericInput(inputId = "mz",
+                                     label = "m/z value:",
+                                     value = 500,
+                                     step = 0.0001)),
+                 
+                 column(3, 
+                        numericInput(inputId = "ppm",
+                                     label = "ppm:",
+                                     value = 1000000,
+                                     step = 1)),
+                 column(3, actionButton("button", "Filter by m/z"))),
+               sliderInput("rt", "RT zoom:",
+                           min = 0, max = 12,
+                           value = c(0, 12), step = 0.1),
+               sliderInput("intensity", "Relative intensity:",
+                           min = 0, max = 100,
+                           value = 10)
+             ),
+             mainPanel(
+               fluidRow(DT::dataTableOutput("table")),
+               fluidRow(
+                 column(6, plotOutput("eic")),
+                 column(6, plotOutput("ms2"))
+               )
+             )
+           )
+  ),
+  tabPanel("Correlations",
+           sidebarLayout(
+             sidebarPanel(
+               fluidRow(fileInput("file1", "Choose TXT file")),
+               fluidRow(plotOutput("ms2_x"))),
+             mainPanel(
+               fluidRow(
+                 column(6, DT::dataTableOutput("spectra")),
+                 column(6, DT::dataTableOutput("clumsid"))),
+               fluidRow(
+                 column(6, plotOutput("ms2_spectra")),
+                 column(6, plotOutput("ms2_clumsid"))
+               )
+             ))),
+  navbarMenu("More",
+             tabPanel("Find fragment", 
+                      h3("Find spectra that contain a specific fragment ion"),
+                      sidebarPanel(
+                        numericInput(inputId = "frag_mz",
+                                     label = "m/z value:",
+                                     value = 153.0557,
+                                     step = 0.0001),
+                        numericInput(inputId = "frag_tol",
+                                     label = "tolerance:",
+                                     value = 0.01,
+                                     step = 0.001)),
+                      mainPanel(
+                        verbatimTextOutput("frag_value")
+                      )),
+             tabPanel("Find loss", 
+                      h3("Find spectra that contain a specific neutral loss"),
+                      sidebarPanel(
+                        numericInput(inputId = "loss_mz",
+                                     label = "m/z value:",
+                                     value = 162.0528,
+                                     step = 0.0001),
+                        numericInput(inputId = "loss_tol",
+                                     label = "tolerance:",
+                                     value = 0.01,
+                                     step = 0.001)),
+                      mainPanel(
+                        verbatimTextOutput("loss_value")
+                      ))
+  ))
 
 server <- function(input, output) {
   dbx <- reactive({
@@ -293,7 +293,7 @@ server <- function(input, output) {
   
   output$frag_value <- renderPrint({ 
     findFragment(ms2clu, mz = input$frag_mz, tolerance = input$frag_tol)
-    })
+  })
   
   output$loss_value <- renderPrint({ 
     findNL(ms2clu_nl, mz = input$loss_mz, tolerance = input$loss_tol)
