@@ -11,7 +11,9 @@ i <- nrow(db)
 
 c_fml <- db$formula[i]
 c_add <- db$adduct[i]
-if(c_add == "[M-H-(H2O)2-CO2]-"){
+if(c_add == "[M-H-CH3]-"){
+  c_mz <- getMolecule(c_fml)$exactmass - 1.007276 - getMolecule("CH3")$exactmass
+} else if(c_add == "[M-H-(H2O)2-CO2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 43.98982926
 } else {
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
@@ -21,9 +23,9 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 289.1425
+c_rt <- 483.2010
 dev.off()
-plot(chr)
+plot(chr, xlim = c(c_rt - 30, c_rt + 30))
 abline(v = c_rt)
 sps <- xdata[[closest(c_rt, rtime(xdata)#, duplicates = "closest"
 )]]
