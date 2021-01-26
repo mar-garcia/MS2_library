@@ -24,8 +24,8 @@ for(i in 1:length(muestra)){
 }
 
 
-c_mz <- 181.0718
-c_rt <- 0.82*60
+c_mz <- 341.1089 
+c_rt <- 0.84*60
 
 ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.1) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
@@ -88,8 +88,10 @@ for(i in 2:length(mzXMLfiles)){
                             backend = MsBackendMzR()))
 }
 
-c_mz <- 101.0245
-c_rt <- 0.82*60
+c_mz <- 161.045211
+c_rt <- 0.81*60
 sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
 sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 10 * c(-1, 1))
 length(sp_ms2list)
+unique(basename(dataOrigin(sp_ms2list)))
+
