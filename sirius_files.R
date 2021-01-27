@@ -28,12 +28,24 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M-H-H2O-C2O2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-H2O]-")) - 
     getMolecule("C2O2")$exactmass
+} else if(c_add == "[M+H-(H2O)2-CO]+"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H-(H2O)2]+")) - 
+    getMolecule("CO")$exactmass
 } else if(c_add == "[M-H-(H2O)2-CO2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 
     getMolecule("CO2")$exactmass
 } else if(c_add == "[M-H-(H2O)2-C3H2O]-" | c_add == "[M-H-(H2O)2-CO-C2H2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-(H2O)2]-")) - 
     getMolecule("C3H2O")$exactmass
+} else if(c_add == "[M+H-(H2O)3-CO-C2H4]+"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H-(H2O)3-CO]+")) - 
+    getMolecule("C2H4")$exactmass
+} else if(c_add == "[M+H-(H2O)4]+"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H-(H2O)3]+")) - 
+    getMolecule("H2O")$exactmass
+} else if(c_add == "[M+H-(H2O)4-C3H6]+"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H-(H2O)3]+")) - 
+    getMolecule("H2O")$exactmass - getMolecule("C3H6")$exactmass
 } else if(c_add == "[M-H-CO2-C2H3NO]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-CO2]-")) - 
     getMolecule("C2H3NO")$exactmass
@@ -46,6 +58,9 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M-H-C10H18O9]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
     getMolecule("C10H18O9")$exactmass
+} else if(c_add == "[M+H-C2H5NO3]+"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H]+")) - 
+    getMolecule("C2H5NO3")$exactmass
 } else {
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, c_add))
 }
@@ -54,7 +69,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 507.8 
+c_rt <- 215.5384 
 dev.off()
 plot(chr, xlim = c(c_rt - 50, c_rt + 50))
 abline(v = c_rt)

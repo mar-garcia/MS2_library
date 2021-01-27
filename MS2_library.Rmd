@@ -34,21 +34,39 @@ for(i in 1:nrow(db)){
   } else if(db$adduct[i] == "[M+H-CH3-CO]+"){
     db$mz[i] <- getMolecule(db$formula[i])$exactmass + 1.007276 -
       getMolecule("CH3")$exactmass - getMolecule("CO")$exactmass
+  } else if(db$adduct[i] == "[M+H-(H2O)2-CO]+"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M+H-(H2O)2]+")) - 
+      getMolecule("CO")$exactmass
   } else if(db$adduct[i] == "[M-H-(H2O)2-CO2]-"){
     db$mz[i] <- unlist(mass2mz(
       getMolecule(db$formula[i])$exactmass, "[M-H-(H2O)2]-")) -
       getMolecule("CO2")$exactmass
+  } else if(db$adduct[i] == "[M+H-(H2O)4]+"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M+H-(H2O)3]+")) - 
+      getMolecule("H2O")$exactmass
+  } else if(db$adduct[i] == "[M+H-(H2O)4-C3H6]+"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M+H-(H2O)3]+")) - 
+      getMolecule("H2O")$exactmass - getMolecule("C3H6")$exactmass
   } else if(db$adduct[i] == "[M-H-hexose-H2O]-"){
     db$mz[i] <- unlist(mass2mz(
       getMolecule(db$formula[i])$exactmass, "[M-H-Hexose-H2O]-")) - 
       getMolecule("H2O")$exactmass
   } else if(db$adduct[i] == "[M-H-(hexose)2]-"){
-    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
       getMolecule("C6H10O5")$exactmass*2
   } else if(db$adduct[i] == "[M-H-C10H18O9]-"){
-    db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M-H]-")) - 
       getMolecule("C10H18O9")$exactmass
-  }else {
+  } else if(db$adduct[i] == "[M+H-C2H5NO3]+"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M+H]+")) - 
+      getMolecule("C2H5NO3")$exactmass
+  } else {
     db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
                                db$adduct[i]))
   }
