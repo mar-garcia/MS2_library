@@ -158,7 +158,7 @@ for(i in 2:nrow(db)){
   } else if(length(ms2clu_i) == 1){
     rts <- ms2clu_i@rt
   }
-  if(length(ms2clu_i) == 1){
+  if(length(ms2clu_i) == 1 & db$abr[i] != "diohbenzoic_2_6_frag2"){
     ms2clu_i@id <- db$name[i]
     ms2clu_i@annotation <- db$adduct[i]
     idx <- unlist(matchWithPpm(c_frag_mz, ms2clu_i@spectrum[,1], ppm = 10))
@@ -168,7 +168,7 @@ for(i in 2:nrow(db)){
     ms2clu <- c(ms2clu, ms2clu_i) 
   }
 }
-rm(i, j, idx, c_fml, c_frag, c_frag_mz, rts)
+rm(i, j, idx, c_frag, c_frag_mz, rts)
 
 ####################################
 
