@@ -24,8 +24,8 @@ for(i in 1:length(muestra)){
 }
 
 
-c_mz <- 341.1089 
-c_rt <- 0.84*60
+c_mz <- 247.1288 
+c_rt <- 0.87*60
 
 ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.1) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
@@ -88,10 +88,40 @@ for(i in 2:length(mzXMLfiles)){
                             backend = MsBackendMzR()))
 }
 
-c_mz <- 161.045211
-c_rt <- 0.81*60
+c_mz <- 304.1506  
+#c_rt <- 9.39*60
 sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
 sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 10 * c(-1, 1))
 length(sp_ms2list)
 unique(basename(dataOrigin(sp_ms2list)))
+
+plotSpectra(sp_ms2list, #main = sps$name,
+            labels = function(z) format(mz(z)[[1L]], digits = 4),
+            labelSrt = -30, labelPos = 2, labelOffset = 0.1)
+
+c_frag <- c()
+for(i in 136:nrow(db)){
+  c_frag <- c(c_frag, unlist(strsplit(db$fragments[i], "; ")))
+}
+c_frag <- unique(c_frag)
+if(db$polarity[nrow(db)] == "POS"){
+  c_pol <- "[M+H]+"
+}else{
+  c_pol <- "[M-H]-"
+}
+c_frag_mz <- c()
+for(i in 1:length(c_frag)){
+  c_frag_mz <- c(c_frag_mz, unlist(mass2mz(getMolecule(c_frag[i])$exactmass, c_pol)))
+}
+for(i in 1:length(c_frag_mz)){
+  sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_frag_mz[i] + 0.01 * c(-1, 1))
+  sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 5 * c(-1, 1))
+  if(length(sp_ms2list) >0){
+    print(c_frag[i])
+    print(c_frag_mz[i])
+    print(length(sp_ms2list))
+    print(unique(basename(dataOrigin(sp_ms2list))))
+    print("####################################################")
+  }
+}
 
