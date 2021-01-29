@@ -71,12 +71,15 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M-H-(hexose)2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
     getMolecule("C6H10O5")$exactmass*2
-} else if(c_add == "[M-H-C10H18O9]-"){
-  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
-    getMolecule("C10H18O9")$exactmass
 } else if(c_add == "[M+H-C2H5NO3]+"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H]+")) - 
     getMolecule("C2H5NO3")$exactmass
+} else if(c_add == "[M-H-C10H18O9]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
+    getMolecule("C10H18O9")$exactmass
+} else if(c_add == "[M-H-C9H7N-CO]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-CO]-")) - 
+    getMolecule("C9H7N")$exactmass
 } else if(c_add == "[M+H-H3NO-CH2N2]+"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M+H]+")) - 
     getMolecule("H3NO")$exactmass - getMolecule("CH2N2")$exactmass
@@ -88,7 +91,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 78.1819 
+c_rt <-  586.6755   
 dev.off()
 plot(chr, xlim = c(c_rt - 50, c_rt + 50))
 abline(v = c_rt)

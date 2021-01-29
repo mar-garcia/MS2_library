@@ -87,6 +87,10 @@ for(i in 1:nrow(db)){
     db$mz[i] <- unlist(mass2mz(
       getMolecule(db$formula[i])$exactmass, "[M+H]+")) - 
       getMolecule("C2H5NO3")$exactmass
+  } else if(db$adduct[i] == "[M-H-C9H7N-CO]-"){
+    db$mz[i] <- unlist(mass2mz(
+      getMolecule(db$formula[i])$exactmass, "[M-H-CO]-")) - 
+      getMolecule("C9H7N")$exactmass
   } else if(db$adduct[i] == "[M+H-H3NO-CH2N2]+"){
     db$mz[i] <- unlist(mass2mz(
       getMolecule(db$formula[i])$exactmass, "[M+H]+")) - 
