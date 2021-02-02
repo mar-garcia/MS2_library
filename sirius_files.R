@@ -9,6 +9,8 @@ db <- read.csv("database.csv")
 db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
 db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
 db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
+db$adduct <- gsub("-C2H4O*", "-C2H4O (McLafferty)", db$adduct)
+
 i <- nrow(db)
 
 c_fml <- db$formula[i]
@@ -23,9 +25,12 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M-H-CH4N]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H]-")) - 
     getMolecule("CH4N")$exactmass
-}else if(c_add == "[M-H-H2O-CO2-C9H18]-"){
+} else if(c_add == "[M-H-H2O-CO2-C9H18]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-H2O-CO2]-")) - 
     getMolecule("C9H18")$exactmass
+} else if(c_add == "[M-H-H2O-NH3-C4O2]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-H2O]-")) - 
+    getMolecule("C4H3NO2")$exactmass
 } else if(c_add == "[M-H-H2O-C2O2]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-H2O]-")) - 
     getMolecule("C2O2")$exactmass
@@ -59,6 +64,9 @@ if(c_add == "[M-H-CH3]-"){
 } else if(c_add == "[M-H-CO2-C2H3NO]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-CO2]-")) - 
     getMolecule("C2H3NO")$exactmass
+} else if(c_add == "[M-H-CO2-C3H5NO]-"){
+  c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-CO2]-")) - 
+    getMolecule("C3H5NO")$exactmass
 } else if(c_add == "[M-H-hexose-H2O]-"){
   c_mz <- unlist(mass2mz(getMolecule(c_fml)$exactmass, "[M-H-Hexose-H2O]-")) - 
     getMolecule("H2O")$exactmass
@@ -91,7 +99,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <-  586.6755   
+c_rt <-  79.7955   
 dev.off()
 plot(chr, xlim = c(c_rt - 50, c_rt + 50))
 abline(v = c_rt)
