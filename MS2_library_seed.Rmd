@@ -1,0 +1,180 @@
+---
+title: "Libraries MS2"
+author: "Mar Garcia-Aloy"
+output: 
+  BiocStyle::html_document:
+    toc: false
+    number_sections: false
+    toc_float: false
+---
+
+```{r startpoint, include = FALSE}
+startpoint <- Sys.time()
+```
+
+```{r, message=FALSE}
+library(Spectra)
+library(CluMSID)
+library(MetaboCoreUtils) # mass2mz
+library(Rdisop)          # getMolecule
+library(MsCoreUtils)     # closest
+library(CompoundDb)      # matchWithPpm 
+
+db <- read.csv("database.csv")
+db <- db[1:50, ]
+db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
+db$adduct <- gsub("H-H2O-NH3]", "H-NH3-H2O]", db$adduct)
+db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
+db$adduct <- gsub("-C2H4O*", "-C2H4O (McLafferty)", db$adduct)
+db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
+db$mz <- NA
+for(i in 1:nrow(db)){
+  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
+                             db$adduct[i]))
+  if(is.na(db$mz[i])){
+    mi <- paste0(
+      substr(db$adduct[i], 1, 4),
+      substr(db$adduct[i], nchar(db$adduct[i])-1, nchar(db$adduct[i]))
+    )
+    c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, mi))
+    losses <- unlist(strsplit(substr(db$adduct[i], 6, nchar(db$adduct[i])-2), "-"))
+    losses <- gsub("hexose", "C6H10O5", losses)
+    for(j in 1:length(losses)){
+      c_mz <- c_mz - getMolecule(losses[j])$exactmass
+    }
+    db$mz[i] <- c_mz
+  }
+}
+
+spd <- DataFrame(
+  msLevel = rep(2L, nrow(db)),
+  rtime = NA,
+  polarity = as.integer(factor(db$polarity)),
+  precursorMz = NA,
+  id = db$abr,
+  name = db$name)
+
+l_mz <- list()
+l_intensity <- list()
+## Assign m/z and intensity values.
+for(i in 1:nrow(db)){
+  register(SerialParam())
+  xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
+                   backend = MsBackendMzR())
+  ms2list <- filterPrecursorMz(object = xdata, 
+                               mz = db$mz[i] + 0.01 * c(-1, 1))
+  ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
+  spd$rtime[i] <- rtime(ms2list)
+  spd$precursorMz[i] <- precursorMz(ms2list)
+  sps <- data.frame(
+    mz = unlist(mz(ms2list)),
+    int = unlist(intensity(ms2list))
+  )
+  c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+  c_frag <- c_frag[!is.na(c_frag)]
+  c_frag_mz <- c()
+  if(db$polarity[i] == "POS"){
+    c_add <- "[M+H]+"
+  }else if(db$polarity[i] == "NEG"){
+    c_add <- "[M-H]-"
+  }
+  for(j in 1:length(c_frag)){
+    c_frag_mz <- c(
+      c_frag_mz, 
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
+  }
+  idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
+  l_mz[[i]] <- sps$mz[idx][order(sps$mz[idx])]
+  l_intensity[[i]] <- sps$int[idx][order(sps$mz[idx])]
+}
+spd$mz <- l_mz
+spd$intensity <- l_intensity
+spd <- Spectra(spd)
+spd <- spd[order(rtime(spd))]
+rm(l_mz, l_intensity, j, idx, sps, xdata, ms2list,
+   c_frag, c_frag_mz)
+
+####################################
+
+i <- 1
+c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+c_frag_mz <- c()
+if(db$polarity[i] == "POS"){
+  c_add <- "[M+H]+"
+}else if(db$polarity[i] == "NEG"){
+  c_add <- "[M-H]-"
+}
+for(j in 1:length(c_frag)){
+  c_frag_mz <- c(
+    c_frag_mz, 
+    unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
+}
+ms2clu <- extractMS2spectra(
+  paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
+  min_peaks = 2,
+  recalibrate_precursor = FALSE)
+ms2clu <- unlist(ms2clu)
+ms2clu <- getSpectrum(ms2clu, "precursor", db$mz[i], mz.tol = 0.01)
+ms2clu <- getSpectrum(ms2clu, "rt", db$RT[i], rt.tol = 2)
+ms2clu@id <- db$name[i]
+ms2clu@annotation <- db$adduct[i]
+idx <- unlist(matchWithPpm(c_frag_mz, ms2clu@spectrum[,1], ppm = 10))
+ms2clu@spectrum <- matrix(ms2clu@spectrum[idx,], ncol = 2)
+ms2clu@polarity <- db$polarity[i]
+
+for(i in 2:nrow(db)){
+  c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+  c_frag <- c_frag[!is.na(c_frag)]
+  c_frag_mz <- c()
+  if(db$polarity[i] == "POS"){
+    c_add <- "[M+H]+"
+  }else if(db$polarity[i] == "NEG"){
+    c_add <- "[M-H]-"
+  }
+  for(j in 1:length(c_frag)){
+    c_frag_mz <- c(
+      c_frag_mz, 
+      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
+  }
+  register(SerialParam())
+  ms2clu_i <- extractMS2spectra(
+    paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
+    min_peaks = 2,
+    recalibrate_precursor = FALSE)
+  register(SerialParam())
+  ms2clu_i <- unlist(ms2clu_i)
+  ms2clu_i <- getSpectrum(ms2clu_i, "precursor", db$mz[i], mz.tol = 0.01)
+  if(length(ms2clu_i) > 1){
+    rts <- c()
+    for(j in 1:length(ms2clu_i)){
+      rts <- c(rts, ms2clu_i[[j]]@rt)
+    }
+    ms2clu_i <- ms2clu_i[[closest(db$RT[i], rts)]]
+  } else if(length(ms2clu_i) == 1){
+    rts <- ms2clu_i@rt
+  }
+  if(length(ms2clu_i) == 1 & db$abr[i] != "diohbenzoic_2_6_frag2"){
+    ms2clu_i@id <- db$name[i]
+    ms2clu_i@annotation <- db$adduct[i]
+    idx <- unlist(matchWithPpm(c_frag_mz, ms2clu_i@spectrum[,1], ppm = 10))
+    ms2clu_i@spectrum <- matrix(ms2clu_i@spectrum[idx,], ncol = 2)
+    ms2clu_i@polarity <- db$polarity[i]
+    
+    ms2clu <- c(ms2clu, ms2clu_i) 
+  }
+}
+rm(i, j, idx, c_frag, c_frag_mz, rts)
+
+save(db, spd, ms2clu, 
+     file = paste0("MS2_library_", 
+                   gsub(" ", "", format(Sys.time(), "%Y %m %d")), 
+                   ".RData"))
+```
+
+
+# Session information
+
+```{r session}
+Sys.time()-startpoint
+devtools::session_info()
+```

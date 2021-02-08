@@ -8,8 +8,8 @@ library(CompoundDb)
 library(xcms)
 
 #db <- read.csv("database.csv")
-load("MS2_library.RData")
-rm(startpoint)
+load(list.files()[grep("MS2_library", list.files())][
+  grep(".RData", list.files()[grep("MS2_library", list.files())])])
 
 ui <- navbarPage(
   "MS2 library",
@@ -228,12 +228,10 @@ server <- function(input, output) {
       spd, 
       which(factor(c(1,2), labels = c("NEG", "POS")) == input$polarity))
     c_spd <- c(x_spd, spdx)
-    tb <- cbind(c_spd$name[order(Spectra::compareSpectra(
-      c_spd, ppm = 50)[,1], decreasing = T)], 
-      Spectra::compareSpectra(c_spd, ppm = 50)[,1][order(
-        Spectra::compareSpectra(c_spd, ppm = 50)[,1], 
-        decreasing = T)]
-    )[-1,]
+    tb <- Spectra::compareSpectra(c_spd, ppm = 50)
+    tb <- cbind(
+      c_spd$name[order(tb[,1], decreasing = T)],
+      tb[order(tb[,1], decreasing = T),1])[-1, ]
     colnames(tb) <- c("name", "corr")
     tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
     j <- input$spectra_rows_selected
@@ -242,7 +240,7 @@ server <- function(input, output) {
       idx <- which((unlist(intensity(spd[i]))*100)/max(unlist(intensity(spd[i]))) >= input$intensity)
       plot(unlist(mz(spd[i])), 
            (unlist(intensity(spd[i]))*100)/max(unlist(intensity(spd[i]))), 
-           type = "h", main = db$name[i],
+           type = "h", main = spd$name[i],
            xlab = "m/z", ylab = "intensity", 
            xlim = c(min(unlist(mz(spd[i])))-10, max(unlist(mz(spd[i])))+10), 
            ylim = c(0, 110)
@@ -263,10 +261,9 @@ server <- function(input, output) {
     ms2clu_i@rt <- 500
     ms2clu_i@polarity <- "x"
     ms2clu_i@spectrum <- cbind(df[,1], df[,2])
-    tmp <- matrix((getSimilarities(ms2clu_i, ms2clux)[order(
-      getSimilarities(ms2clu_i, ms2clux), decreasing = T)]), ncol = 1)
-    tmp <- cbind(names((getSimilarities(ms2clu_i, ms2clux)[order(
-      getSimilarities(ms2clu_i, ms2clux), decreasing = T)])), tmp)
+    tmp <- getSimilarities(ms2clu_i, ms2clux)
+    tmp <- cbind(names(tmp), matrix(tmp, ncol = 1))
+    tmp <- tmp[order(tmp[,2], decreasing = T),]
     colnames(tmp) <- c("name", "corr")
     tmp[,2] <- sprintf("%.3f", round(as.numeric(tmp[,2]), 3))
     j <- input$clumsid_rows_selected
@@ -276,12 +273,15 @@ server <- function(input, output) {
     }
     if (length(j) == 1){
       i <- which(names == tmp[j,1])
-      idx <- which((ms2clux[[i]]@spectrum[,2]*100)/max(ms2clux[[i]]@spectrum[,2]) >= input$intensity)
+      idx <- which(
+        (ms2clux[[i]]@spectrum[,2]*100)/max(ms2clux[[i]]@spectrum[,2]) >= 
+          input$intensity)
       plot(ms2clux[[i]]@spectrum[,1], 
            (ms2clux[[i]]@spectrum[,2]*100)/max(ms2clux[[i]]@spectrum[,2]), 
            type = "h", main = ms2clux[[i]]@id,
            xlab = "m/z", ylab = "intensity", 
-           xlim = c(min(ms2clux[[i]]@spectrum[,1])-10, max(ms2clux[[i]]@spectrum[,1])+10), 
+           xlim = c(min(ms2clux[[i]]@spectrum[,1])-10, 
+                    max(ms2clux[[i]]@spectrum[,1])+10), 
            ylim = c(0, 110)
       ) 
       text(ms2clux[[i]]@spectrum[idx,1], 
