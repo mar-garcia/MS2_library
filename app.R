@@ -11,31 +11,6 @@ library(xcms)
 load(list.files()[grep("MS2_library", list.files())][
   grep(".RData", list.files()[grep("MS2_library", list.files())])])
 
-db <- read.csv("database.csv")
-db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
-db$adduct <- gsub("H-H2O-NH3]", "H-NH3-H2O]", db$adduct)
-db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
-db$adduct <- gsub("-C2H4O*", "-C2H4O (McLafferty)", db$adduct)
-db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
-db$mz <- NA
-for(i in 1:nrow(db)){
-  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
-                             db$adduct[i]))
-  if(is.na(db$mz[i])){
-    mi <- paste0(
-      substr(db$adduct[i], 1, 4),
-      substr(db$adduct[i], nchar(db$adduct[i])-1, nchar(db$adduct[i]))
-    )
-    c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, mi))
-    losses <- unlist(strsplit(substr(db$adduct[i], 6, nchar(db$adduct[i])-2), "-"))
-    losses <- gsub("hexose", "C6H10O5", losses)
-    for(j in 1:length(losses)){
-      c_mz <- c_mz - getMolecule(losses[j])$exactmass
-    }
-    db$mz[i] <- c_mz
-  }
-}
-
 ui <- navbarPage(
   "MS2 library",
   theme = shinythemes::shinytheme("united"),  
@@ -168,8 +143,9 @@ server <- function(input, output) {
     i <- input$table_rows_selected
     if (length(i) > 0){
       i <- i[length(i)]
-      ms2list <- filterPrecursorMz(object = spd, mz = db$mz[i] + 0.01 * c(-1, 1))
-      ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
+      ms2list <- spd[spd$name == db$name[i]]
+      ms2list <- filterPrecursorMz(object = ms2list, mz = db$mz[i] + 0.01 * c(-1, 1))
+      #ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
       sps <- data.frame(
         mz = unlist(mz(ms2list)),
         int = unlist(intensity(ms2list))
@@ -178,7 +154,8 @@ server <- function(input, output) {
       idx <- which(sps$int100 >= input$intensity)
       plot(sps$mz, sps$int100, type = "h",
            xlab = "m/z", ylab = "relative intensity", 
-           xlim = c(min(sps$mz)-10, max(sps$mz)+10), 
+           xlim = c(50, db$mz[i]+10),
+           #xlim = c(min(sps$mz)-10, max(sps$mz)+10), 
            ylim = c(0, 110)) 
       text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
            offset = -1, pos = 2, srt = -30)
