@@ -11,6 +11,31 @@ library(xcms)
 load(list.files()[grep("MS2_library", list.files())][
   grep(".RData", list.files()[grep("MS2_library", list.files())])])
 
+db <- read.csv("database.csv")
+db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
+db$adduct <- gsub("H-H2O-NH3]", "H-NH3-H2O]", db$adduct)
+db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
+db$adduct <- gsub("-C2H4O*", "-C2H4O (McLafferty)", db$adduct)
+db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
+db$mz <- NA
+for(i in 1:nrow(db)){
+  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
+                             db$adduct[i]))
+  if(is.na(db$mz[i])){
+    mi <- paste0(
+      substr(db$adduct[i], 1, 4),
+      substr(db$adduct[i], nchar(db$adduct[i])-1, nchar(db$adduct[i]))
+    )
+    c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, mi))
+    losses <- unlist(strsplit(substr(db$adduct[i], 6, nchar(db$adduct[i])-2), "-"))
+    losses <- gsub("hexose", "C6H10O5", losses)
+    for(j in 1:length(losses)){
+      c_mz <- c_mz - getMolecule(losses[j])$exactmass
+    }
+    db$mz[i] <- c_mz
+  }
+}
+
 ui <- navbarPage(
   "MS2 library",
   theme = shinythemes::shinytheme("united"),  
