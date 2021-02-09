@@ -101,9 +101,9 @@ for(i in 1:nrow(db)){
 spd$mz <- l_mz
 spd$intensity <- l_intensity
 spd <- Spectra(spd)
-spd <- spd[order(rtime(spd))]
 
 spd <- c(spd_old, spd)
+spd <- spd[order(rtime(spd))]
 
 rm(i, j, l_mz, l_intensity, idx, sps, xdata, ms2list,
    c_add, c_mz, mi, c_frag, c_frag_mz, losses, spd_old)
