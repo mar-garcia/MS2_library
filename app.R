@@ -112,7 +112,8 @@ server <- function(input, output) {
   output$eic <- renderPlot({
     db <- dbx()
     i <- input$table_rows_selected
-    if (length(i) == 1){
+    if (length(i) > 0){
+      i <- i[length(i)]
       xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                        backend = MsBackendMzR())
       ms2list <- filterPrecursorMz(object = xdata, mz = db$mz[i] + 0.01 * c(-1, 1))
@@ -140,7 +141,8 @@ server <- function(input, output) {
   output$ms2 <- renderPlot({
     db <- dbx()
     i <- input$table_rows_selected
-    if (length(i) == 1){
+    if (length(i) > 0){
+      i <- i[length(i)]
       ms2list <- filterPrecursorMz(object = spd, mz = db$mz[i] + 0.01 * c(-1, 1))
       ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
       sps <- data.frame(
