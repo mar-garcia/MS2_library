@@ -24,8 +24,8 @@ for(i in 1:length(muestra)){
 }
 
 
-c_mz <- 107.0502    
-c_rt <- 8.62*60
+c_mz <- 265.11938
+c_rt <- 0.86*60
 
 ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.01) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
@@ -90,21 +90,21 @@ for(i in 2:length(mzXMLfiles)){
                             backend = MsBackendMzR()))
 }
 
-c_mz <- 120.0808     
+c_mz <- 221.0932 
 #c_rt <- 9.39*60
 sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
 sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 60 * c(-1, 1))
 length(sp_ms2list)
 unique(basename(dataOrigin(sp_ms2list)))
 
-options(scipen = -5)
+#options(scipen = -5)
 plotSpectra(sp_ms2list, #main = sps$name,
-            labels = function(z) format(mz(z)[[1L]], digits = 4),
+            labels = function(z) format(mz(z)[[1L]], digits = 6),
             labelSrt = -30, labelPos = 2, labelOffset = 0.1)
-options(scipen = 5)
+#options(scipen = 5)
 
 c_frag <- c()
-for(i in 272:nrow(db)){
+for(i in 302:nrow(db)){
   c_frag <- c(c_frag, unlist(strsplit(db$fragments[i], "; ")))
 }
 c_frag <- unique(c_frag)

@@ -52,7 +52,7 @@ for(i in 1:nrow(db)){
 
 db$id <- paste(db$path, db$file, db$mz)
 db <- db[!db$id %in% db_old$id,]
-#db <- db[1:50, ]
+#db <- db[1:70, ]
 
 ####################################
 

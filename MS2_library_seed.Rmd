@@ -21,7 +21,7 @@ library(MsCoreUtils)     # closest
 library(CompoundDb)      # matchWithPpm 
 
 db <- read.csv("database.csv")
-db <- db[1:50, ]
+db <- db[1:100, ]
 db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
 db$adduct <- gsub("H-H2O-NH3]", "H-NH3-H2O]", db$adduct)
 db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
@@ -58,7 +58,6 @@ l_mz <- list()
 l_intensity <- list()
 ## Assign m/z and intensity values.
 for(i in 1:nrow(db)){
-  register(SerialParam())
   xdata <- Spectra(paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"), 
                    backend = MsBackendMzR())
   ms2list <- filterPrecursorMz(object = xdata, 
@@ -136,7 +135,6 @@ for(i in 2:nrow(db)){
       c_frag_mz, 
       unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
   }
-  register(SerialParam())
   ms2clu_i <- extractMS2spectra(
     paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"),
     min_peaks = 2,
