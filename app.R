@@ -45,7 +45,8 @@ ui <- navbarPage(
                fluidRow(
                  column(6, plotOutput("eic")),
                  column(6, plotOutput("ms2"))
-               )
+               ),
+               fluidRow(verbatimTextOutput("path"))
              )
            )
   ),
@@ -160,6 +161,15 @@ server <- function(input, output) {
       text(sps$mz[idx], sps$int100[idx], sprintf("%.4f", round(sps$mz[idx], 4)), 
            offset = -1, pos = 2, srt = -30)
     } 
+  })
+  
+  output$path <- renderPrint({
+    db <- dbx()
+    i <- input$table_rows_selected
+    if (length(i) > 0){
+      i <- i[length(i)]
+      paste(db$path[i], db$file[i], sep = "/")
+      }
   })
   
   output$spectra <- DT::renderDataTable(DT::datatable({
