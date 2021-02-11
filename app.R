@@ -74,7 +74,7 @@ ui <- navbarPage(
                                      step = 0.0001),
                         numericInput(inputId = "frag_tol",
                                      label = "tolerance:",
-                                     value = 0.01,
+                                     value = 0.001,
                                      step = 0.001)),
                       mainPanel(
                         verbatimTextOutput("frag_value")
@@ -88,7 +88,7 @@ ui <- navbarPage(
                                      step = 0.0001),
                         numericInput(inputId = "loss_tol",
                                      label = "tolerance:",
-                                     value = 0.01,
+                                     value = 0.001,
                                      step = 0.001)),
                       mainPanel(
                         verbatimTextOutput("loss_value")
