@@ -16,9 +16,9 @@ startpoint <- Sys.time()
 library(Spectra)
 library(CluMSID)
 library(MetaboCoreUtils) # mass2mz
-library(Rdisop) # getMolecule
-library(MsCoreUtils) # closest
-library(CompoundDb) # matchWithPpm 
+library(Rdisop)          # getMolecule
+library(MsCoreUtils)     # closest
+library(CompoundDb)     # matchWithPpm 
 
 load(list.files()[grep("MS2_library", list.files())][
   grep(".RData", list.files()[grep("MS2_library", list.files())])])
@@ -33,9 +33,10 @@ db$adduct <- gsub("-C2H4O*", "-C2H4O (McLafferty)", db$adduct)
 db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
 db$mz <- NA
 for(i in 1:nrow(db)){
-  db$mz[i] <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, 
-                             db$adduct[i]))
-  if(is.na(db$mz[i])){
+  if(db$adduct[i] %in% adducts()[, 1]){
+    db$mz[i] <- unlist(CompoundDb::mass2mz(getMolecule(db$formula[i])$exactmass, 
+                               db$adduct[i]))
+  } else {
     mi <- paste0(
       substr(db$adduct[i], 1, 4),
       substr(db$adduct[i], nchar(db$adduct[i])-1, nchar(db$adduct[i]))
