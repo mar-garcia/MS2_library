@@ -1,6 +1,8 @@
 library(CluMSID)
 library(xcms)
 library(Spectra)
+library(MetaboCoreUtils)
+library(Rdisop)
 
 mzXMLfiles <- list.files("tmp/")
 spectras <- lapply(paste0("tmp/", mzXMLfiles), 
@@ -24,12 +26,12 @@ for(i in 1:length(muestra)){
 }
 
 
-c_mz <- 251.1278 
-c_rt <- 7.25*60
+c_mz <- 196.0757 
+c_rt <- 8.49*60
 
 ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.01) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
-#ms2sub <- getSpectrum(ms2sub, "annotation", "tyramine_URINE_DDA_POS.mzML")
+#ms2sub <- getSpectrum(ms2sub, "annotation", "compound_8_urine_pos_rep3.mzML")
 
 if(length(ms2sub) > 1){
   intensitats <- c()
@@ -90,10 +92,10 @@ for(i in 2:length(mzXMLfiles)){
                             backend = MsBackendMzR()))
 }
 
-c_mz <- 215.1067    
+c_mz <- 141.0699           
 #c_rt <- 9.39*60
 sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
-sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 60 * c(-1, 1))
+sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 30 * c(-1, 1))
 length(sp_ms2list)
 unique(basename(dataOrigin(sp_ms2list)))
 
@@ -104,7 +106,7 @@ plotSpectra(sp_ms2list, #main = sps$name,
 options(scipen = 5)
 
 c_frag <- c()
-for(i in 316:nrow(db)){
+for(i in 319:nrow(db)){
   c_frag <- c(c_frag, unlist(strsplit(db$fragments[i], "; ")))
 }
 c_frag <- unique(c_frag)
@@ -119,7 +121,7 @@ for(i in 1:length(c_frag)){
 }
 for(i in 1:length(c_frag_mz)){
   sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_frag_mz[i] + 0.01 * c(-1, 1))
-  sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 60 * c(-1, 1))
+  sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 30 * c(-1, 1))
   if(length(sp_ms2list) >0){
     print(c_frag[i])
     print(c_frag_mz[i])
