@@ -21,7 +21,7 @@ library(MsCoreUtils)     # closest
 library(CompoundDb)      # matchWithPpm 
 
 db <- read.csv("database.csv")
-#db <- db[1:100, ]
+db <- db[1:200, ]
 db$adduct <- gsub("H-H2O-CO]", "H-HCOOH]", db$adduct)
 db$adduct <- gsub("H-H2O-NH3]", "H-NH3-H2O]", db$adduct)
 db$adduct <- gsub("H-hexose]", "H-Hexose-H2O]", db$adduct)
