@@ -36,7 +36,7 @@ xdata <- readMSData(files = paste0("mzML/", db$path[i], "/", db$file[i], ".mzML"
                     mode = "onDisk")
 chr <- chromatogram(xdata, mz = c_mz + 0.01 * c(-1, 1))
 chromPeaks(findChromPeaks(chr, param = CentWaveParam(peakwidth = c(2, 20))))
-c_rt <- 515.3046 
+c_rt <- 74.5031 
 dev.off()
 plot(chr, xlim = c(c_rt - 50, c_rt + 50))
 abline(v = c_rt)
@@ -70,11 +70,13 @@ plotSpectra(ms2list, #main = sps$name,
 
 
 list.files("sirius/tmp/")
-fd = "9_unknown_"
+fd = "15_unknown_"
 list.files(paste("sirius/tmp", fd, "spectra/", sep = "/"))
 
-fl = "C13H9NO_[M+H]+.tsv"
+fl = "C9H9NO2_"
 
-tb = read.table(paste("sirius/tmp", fd, "spectra", fl, sep = "/"), header = T, sep = "\t")
+flx = list.files(paste("sirius/tmp", fd, "spectra/", sep = "/"))[grep(
+  fl, list.files(paste("sirius/tmp", fd, "spectra/", sep = "/")))]
+tb = read.table(paste("sirius/tmp", fd, "spectra", flx, sep = "/"), header = T, sep = "\t")
 tb = tb[order(tb$mz, decreasing = T), ]
 paste(tb$formula, collapse = "; ")
