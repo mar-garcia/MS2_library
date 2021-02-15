@@ -26,8 +26,8 @@ for(i in 1:length(muestra)){
 }
 
 
-c_mz <- 196.0757 
-c_rt <- 8.49*60
+c_mz <- 223.07243   
+c_rt <- 0.96*60
 
 ms2sub <- getSpectrum(ms2spectras, "precursor", c_mz, mz.tol = 0.01) #(5*mz)/1e6
 ms2sub <- getSpectrum(ms2sub, "rt", c_rt, rt.tol = 10)
@@ -92,7 +92,7 @@ for(i in 2:length(mzXMLfiles)){
                             backend = MsBackendMzR()))
 }
 
-c_mz <- 141.0699           
+c_mz <- 162.0561                 
 #c_rt <- 9.39*60
 sp_ms2list <- filterPrecursorMz(object = sp_xdata, mz = c_mz + 0.01 * c(-1, 1))
 sp_ms2list <- filterRt(sp_ms2list, rt = c_rt + 30 * c(-1, 1))
@@ -106,7 +106,7 @@ plotSpectra(sp_ms2list, #main = sps$name,
 options(scipen = 5)
 
 c_frag <- c()
-for(i in 319:nrow(db)){
+for(i in 328:nrow(db)){
   c_frag <- c(c_frag, unlist(strsplit(db$fragments[i], "; ")))
 }
 c_frag <- unique(c_frag)
@@ -131,3 +131,25 @@ for(i in 1:length(c_frag_mz)){
   }
 }
 
+#############################################################################
+
+db = read.csv("database.csv")
+dbx = db[db$name == "3-Hydroxy-DL-kynurenine (fragment)", ]
+dbx[,c(1:5, 8, 9)]
+i = 1
+ms2clu_i <- extractMS2spectra(
+  paste0("mzML/", dbx$path[i], "/", dbx$file[i], ".mzML"),
+  min_peaks = 2,
+  recalibrate_precursor = FALSE)
+ms2clu_i <- unlist(ms2clu_i)
+ms2clu_i <- getSpectrum(ms2clu_i, "precursor", 206.04588, mz.tol = 0.01)
+if(length(ms2clu_i) > 1){
+  rts <- c()
+  for(j in 1:length(ms2clu_i)){
+    rts <- c(rts, ms2clu_i[[j]]@rt)
+  }
+  ms2clu_i <- ms2clu_i[[closest(72.1, rts)]]
+} else if(length(ms2clu_i) == 1){
+  rts <- ms2clu_i@rt
+}
+specplot(ms2clu_i)
