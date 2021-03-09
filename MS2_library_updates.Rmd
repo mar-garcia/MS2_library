@@ -17,6 +17,7 @@ library(Spectra)
 library(CluMSID)
 library(MetaboCoreUtils) # mass2mz
 library(Rdisop)          # getMolecule
+library(OrgMassSpecR)
 library(MsCoreUtils)     # closest
 library(CompoundDb)     # matchWithPpm 
 
@@ -34,18 +35,38 @@ db$adduct <- gsub("\\(H2O)3-C2H2", "\\H2O-H2O-C2H4O (McLafferty)", db$adduct)
 db$mz <- NA
 for(i in 1:nrow(db)){
   if(db$adduct[i] %in% adducts()[, 1]){
-    db$mz[i] <- unlist(CompoundDb::mass2mz(getMolecule(db$formula[i])$exactmass, 
-                               db$adduct[i]))
+    if(grepl("D", db$formula[i])){
+      db$mz[i] <- unlist(CompoundDb::mass2mz(
+        getMolecule(db$formula[i])$exactmass, db$adduct[i]))
+    } else {
+      db$mz[i] <- unlist(CompoundDb::mass2mz(
+        MonoisotopicMass(db$formula[i], formula = ListFormula(db$formula[i])), 
+                                             db$adduct[i]))
+    }
+    
   } else {
     mi <- paste0(
       substr(db$adduct[i], 1, 4),
       substr(db$adduct[i], nchar(db$adduct[i])-1, nchar(db$adduct[i]))
     )
-    c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, mi))
-    losses <- unlist(strsplit(substr(db$adduct[i], 6, nchar(db$adduct[i])-2), "-"))
+    if(grepl("D", db$formula[i])){
+      c_mz <- unlist(mass2mz(getMolecule(db$formula[i])$exactmass, mi))
+    } else {
+      c_mz <- unlist(mass2mz(
+        MonoisotopicMass(db$formula[i], formula = ListFormula(db$formula[i])), 
+        mi))
+    }
+    
+    losses <- unlist(strsplit(substr(db$adduct[i], 6, 
+                                     nchar(db$adduct[i])-2), "-"))
     losses <- gsub("hexose", "C6H10O5", losses)
     for(j in 1:length(losses)){
-      c_mz <- c_mz - getMolecule(losses[j])$exactmass
+      if(grepl("D", losses[j])){
+        c_mz <- c_mz - getMolecule(losses[j])$exactmass 
+      } else {
+        c_mz <- c_mz - MonoisotopicMass(
+          losses[j], formula = ListFormula(losses[j]))
+      }
     }
     db$mz[i] <- c_mz
   }
@@ -75,29 +96,38 @@ for(i in 1:nrow(db)){
                    backend = MsBackendMzR())
   ms2list <- filterPrecursorMz(object = xdata, 
                                mz = db$mz[i] + 0.01 * c(-1, 1))
-  ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
-  spd$rtime[i] <- rtime(ms2list)
-  spd$precursorMz[i] <- precursorMz(ms2list)
-  sps <- data.frame(
-    mz = unlist(mz(ms2list)),
-    int = unlist(intensity(ms2list))
-  )
-  c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
-  c_frag <- c_frag[!is.na(c_frag)]
-  c_frag_mz <- c()
-  if(db$polarity[i] == "POS"){
-    c_add <- "[M+H]+"
-  }else if(db$polarity[i] == "NEG"){
-    c_add <- "[M-H]-"
+  if(length(ms2list) > 0){
+    ms2list <- ms2list[closest(db$RT[i], rtime(ms2list))]
+    spd$rtime[i] <- rtime(ms2list)
+    spd$precursorMz[i] <- precursorMz(ms2list)
+    sps <- data.frame(
+      mz = unlist(mz(ms2list)),
+      int = unlist(intensity(ms2list))
+    )
+    c_frag <- c(db$formula[i], unlist(strsplit(db$fragments[i], "; ")))
+    c_frag <- c_frag[!is.na(c_frag)]
+    c_frag_mz <- c()
+    if(db$polarity[i] == "POS"){
+      c_add <- "[M+H]+"
+    }else if(db$polarity[i] == "NEG"){
+      c_add <- "[M-H]-"
+    }
+    for(j in 1:length(c_frag)){
+      if(grepl("D", c_frag[j])){
+        c_frag_mz <- c(
+          c_frag_mz, 
+          unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add))) 
+      } else {
+        c_frag_mz <- c(
+          c_frag_mz, 
+          unlist(mass2mz(MonoisotopicMass(
+            c_frag[j], formula = ListFormula(c_frag[j])), c_add)))
+      }
+    }
+    idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
+    l_mz[[i]] <- sps$mz[idx][order(sps$mz[idx])]
+    l_intensity[[i]] <- sps$int[idx][order(sps$mz[idx])] 
   }
-  for(j in 1:length(c_frag)){
-    c_frag_mz <- c(
-      c_frag_mz, 
-      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
-  }
-  idx <- unlist(matchWithPpm(c_frag_mz, sps$mz, ppm = 10))
-  l_mz[[i]] <- sps$mz[idx][order(sps$mz[idx])]
-  l_intensity[[i]] <- sps$int[idx][order(sps$mz[idx])]
 }
 spd$mz <- l_mz
 spd$intensity <- l_intensity
@@ -121,9 +151,16 @@ for(i in 1:nrow(db)){
     c_add <- "[M-H]-"
   }
   for(j in 1:length(c_frag)){
-    c_frag_mz <- c(
-      c_frag_mz, 
-      unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add)))
+    if(grepl("D", c_frag[j])){
+      c_frag_mz <- c(
+        c_frag_mz, 
+        unlist(mass2mz(getMolecule(c_frag[j])$exactmass, c_add))) 
+    } else {
+      c_frag_mz <- c(
+        c_frag_mz, 
+        unlist(mass2mz(MonoisotopicMass(
+          c_frag[j], formula = ListFormula(c_frag[j])), c_add))) 
+    }
   }
   register(SerialParam())
   ms2clu_i <- extractMS2spectra(
