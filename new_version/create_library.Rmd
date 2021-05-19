@@ -18,11 +18,13 @@ library(readxl)
 library(Spectra)
 library(Rdisop)
 library(CompoundDb)
+library(OrgMassSpecR)
 
 ions <- c("[M-H]-", "[M+H]+")
 names(ions) <- c("NEG", "POS")
 
 cmps <- read_xlsx("C:/Users/garciaalom/Google Drive/laboratory/db_compounds.xlsx")
+cmps[, 5:ncol(cmps)] <- cmps[,5:ncol(cmps)] * 60
 inj <- read_xlsx("C:/Users/garciaalom/Google Drive/laboratory/standards_injections.xlsx")
 inj <- inj[!is.na(inj$ID_cmp),]
 
@@ -44,7 +46,13 @@ for(k in seq(length(ions))){
                         backend = MsBackendDataFrame()#MsBackendMzR()
         )
         i.fl <- i.fl[msLevel(i.fl) > 1]
-        i.mz <- unlist(mass2mz(getMolecule(i.fml)$exactmass, ions[k]))
+        if(grepl("D", i.fml)){
+          i.mz <- unlist(mass2mz(getMolecule(i.fml)$exactmass, ions[k]))
+        } else {
+          i.mz <- unlist(mass2mz(MonoisotopicMass(formula = ListFormula(i.fml)), 
+                                 ions[k]))
+        }
+        
         i.fl <- filterPrecursorMz(i.fl, i.mz + 0.01 * c(-1, 1))
         i.chr <- i.inj$chromatography[i]
         i.rt <- unlist(c(cmps[cmps$ID_cmp == i.cmp[j], 
@@ -62,10 +70,12 @@ for(k in seq(length(ions))){
           } else{
             sps.ms2 <- i.fl
           } # end if(exists("sps.ms2")
+        } else{
+          print(paste("Check FILE", i.inj$filename[i], "-", i.cmp[j]))
         } # end length(i.fl)
       } # end if(is.na(i.fml))
     } # end i.cmp "j"
-  } # end i.fl "i"
+  } # end i.inj "i"
   
   save(sps.ms2, file = paste0("MS2library_", i.pol, ".RData"))
   rm(sps.ms2)
