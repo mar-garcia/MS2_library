@@ -1,10 +1,7 @@
-mzmL/*
-sirius/*
-tmp/*
-old/*
-*.csv
-*.csv#
-*.html
-*.RData
-*.txt
-*standby*
+*Rproj*
+*nojekyll
+_site*
+about*
+compounds*
+index*
+molecule*
