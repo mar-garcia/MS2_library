@@ -1,7 +1,1 @@
-*Rproj*
-*nojekyll
-about*
-compounds*
-index*
-molecule*
-_site/site_libs*
+*.csv
