@@ -1,0 +1,52 @@
+---
+title: "M0001"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(xcms)
+library(Spectra)
+library(MsCoreUtils)
+library(plotly)
+
+fl <- "../../../z_app_plotMS2/ala_leu_URINE_DDA_POS.mzML"
+
+ms1 <- readMSData(fl, mode = "onDisk")
+sps <- Spectra(fl, backend = MsBackendMzR())
+
+chr <- chromatogram(ms1,
+                    mz = 203.139 + 0.01 * c(-1, 1),
+                    rt = 2.29*60 + 30 * c(-1, 1))
+
+dt1 <- data.frame(rt = rtime(chr[[1]]), 
+                  int = intensity(chr[[1]]))
+dt2 <- data.frame(rt = 
+                    c(rtime(sps[sps@backend@spectraData@listData$scanIndex == 321]), rtime(sps[sps@backend@spectraData@listData$scanIndex == 325])))
+dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
+
+plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
+        type = "scatter") %>% 
+  add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
+            text= paste("Scan N.", c(321, 325))) %>% 
+  layout(title = 'EIC', yaxis = list(title = "intensity"), 
+         xaxis = list(title = "RT (min)"), showlegend = FALSE)
+
+
+
+sps <- sps[sps@backend@spectraData@listData$scanIndex == 321]
+dt <- data.frame(
+  mz = unlist(mz(sps)),
+  int = unlist(intensity(sps))
+)
+dt$mz1 <- round(dt$mz, 4)
+dt$mz <- as.factor(dt$mz)
+plot_ly(data = dt, x = ~mz, y = ~int, type = "bar", 
+        hovertext = ~mz1, hoverinfo = "text")  %>% 
+  layout(title = 'MS/MS Spectrum', yaxis = list(title = "intensity"), 
+         xaxis = list(title = "m/z", showticklabels = FALSE))
+```
+

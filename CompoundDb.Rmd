@@ -1,0 +1,147 @@
+---
+title: "Molecules"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(CompoundDb)
+
+cmps <- read.csv("molecules.csv")
+
+if(!any(grepl("CompDb_inhouse_0", list.files()))){
+  # Create the dataframe with the necessary data from each compound
+  cmps <- data.frame(
+    compound_id = cmps$ID_M,
+    name = cmps$Molecule,
+    inchi = NA_character_,
+    inchikey = NA_character_,
+    formula = cmps$Formula,
+    exactmass = MetaboCoreUtils::calculateMass(cmps$Formula),
+    rtime = NA,
+    synonyms = NA_character_,
+    class_super = cmps$class_super,
+    class_main = cmps$class_main,
+    class_sub = cmps$class_sub,
+    RefMet = cmps$RefMet
+  )
+  
+  
+  # Create "metadata":
+  metad <- make_metadata(source = "inhouse", url = "",
+                         source_version = "0", 
+                         source_date = Sys.Date(),
+                         organism = NA_character_)
+  
+  # Create "CompDb":
+  db_file <- createCompDb(cmps, metadata = metad, 
+                          path = getwd(), 
+                          dbFile = "CompDb_inhouse_0.sqlite")
+  rm(cmps, metad, db_file)
+}
+
+cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
+
+cmps <- compounds(cdb, 
+                  columns = c("compound_id", "name", "formula", "exactmass",
+                              "class_super", "class_main", "class_sub",
+                              "RefMet"))
+colnames(cmps) <- c("ID_M", "Metabolite", "Formula", "Exact Mass", 
+                    "Super class", "Main class", "Sub class", "RefMet")
+cmps$ID_M <- paste0("<a href='molecule/",cmps$ID_M,".html'>",
+                    cmps$ID_M, "</a>") 
+cmps$RefMet <- paste0(
+  "<a href='https://www.metabolomicsworkbench.org/databases/refmet/refmet_details.php?REFMET_NAME=",
+  cmps$RefMet, "'>", cmps$RefMet, "</a>") 
+DT::datatable(cmps, escape = FALSE, rownames= FALSE)
+```
+
+
+```{r}
+# Define a function to remove low intensity peaks
+low_int <- function(x, ...) {
+  x > max(x, na.rm = TRUE) * 0.05
+}
+
+#' Define a function to *scale* the intensities
+scale_int <- function(x, ...) {
+  maxint <- max(x[, "intensity"], na.rm = TRUE)
+  x[, "intensity"] <- 100 * x[, "intensity"] / maxint
+  x
+}
+
+
+library(Spectra)
+ms2_tb <- read.csv("MSMS.csv")
+
+# Exclude items already in the DB:
+sps <- Spectra(cdb)
+ms2_tb <- ms2_tb[!paste(
+  stringi::stri_escape_unicode(ms2_tb$file), ms2_tb$scan) %in% 
+    stringi::stri_escape_unicode(unique(paste(sps$dataOrigin,
+                                              sps$scanIndex))),]
+if(nrow(ms2_tb) > 0){
+  ms2 <- Spectra(unique(ms2_tb$file), backend = MsBackendDataFrame())
+  ca <- unique(paste(ms2_tb$compound_id, ms2_tb$adduct))
+  for(i in seq(length(ca))){
+    tmp_ms2_tb <- ms2_tb[paste(ms2_tb$compound_id, ms2_tb$adduct) == ca[i],]
+    df <- DataFrame(msLevel = rep(NA, nrow(tmp_ms2_tb)))
+    precursorMz <- rep(NA, nrow(tmp_ms2_tb))
+    rt <- rep(NA, nrow(tmp_ms2_tb))
+    p <- rep(NA, nrow(tmp_ms2_tb))
+    ce <- rep(NA, nrow(tmp_ms2_tb))
+    do <- rep(NA, nrow(tmp_ms2_tb))
+    mz <- vector(mode = "list", length = nrow(tmp_ms2_tb))
+    intensity <- vector(mode = "list", length = nrow(tmp_ms2_tb))
+    for(j in seq(nrow(tmp_ms2_tb))){
+      tmp_ms2 <- ms2[
+        ms2@backend@spectraData@listData$dataOrigin == tmp_ms2_tb$file[j]]
+      tmp_ms2 <- tmp_ms2[
+        tmp_ms2@backend@spectraData@listData$scanIndex == tmp_ms2_tb$scan[j]]
+      df$msLevel[j] <- msLevel(tmp_ms2)
+      precursorMz[j] <- precursorMz(tmp_ms2)
+      rt[j] <- rtime(tmp_ms2)
+      p[j] <- polarity(tmp_ms2)
+      ce[j] <- tmp_ms2@backend@spectraData@listData$collisionEnergy
+      do[j] <- tmp_ms2@backend@spectraData@listData$dataOrigin
+      mz[[j]] <- unlist(mz(tmp_ms2))
+      intensity[[j]] <- unlist(intensity(tmp_ms2))
+    }
+    df$precursorMz <- precursorMz
+    df$rtime <- rt
+    df$scanIndex <- tmp_ms2_tb$scan
+    df$polarity <- p
+    df$collisionEnergy <- ce
+    df$dataOrigin <- do
+    df$mz <- mz
+    df$intensity <- intensity
+    df$LC_method <- tmp_ms2_tb$LC_method
+    sps <- Spectra(df)
+    sps$compound_id <- tmp_ms2_tb$compound_id[1]
+    sps$instrument <- "Orbitrap LTQ-XL"
+    sps$raw_spectra <- TRUE
+    cdb <- insertSpectra(cdb, spectra = sps)
+    
+    
+    # Scale fragment intensities:
+    sps <- addProcessing(sps, intensity = scale_int)
+    
+    #'Remove peaks with an intensity below 5% of BPI
+    sps <- filterIntensity(sps, intensity = low_int)
+    
+    # Combine all spectras:
+    sps <- Spectra::combineSpectra(
+      sps, mzFun = base::mean, intensityFun = base::mean, # OR "sum"? 
+      tolerance = 0.01, minProp = 0.5, peaks = "intersect", 
+      weighted = TRUE)
+    
+    
+    sps$raw_spectra <- FALSE
+    cdb <- insertSpectra(cdb, spectra = sps)
+  }
+}
+```
+

@@ -1,0 +1,25 @@
+---
+title: "Metabolite Cards"
+output: html_document
+---
+
+```{r setupx, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE}
+library(CompoundDb)
+```
+
+```{r x}
+cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
+sps <- Spectra(cdb)
+
+m <- unique(sps$compound_id)
+# EXCLUDE METABOLITES ALREADY PROCESSED!!!
+i <- 1
+rmarkdown::render("M0000.Rmd", 
+                  params = list(metabolite = m[i]),
+                  output_file = paste0("molecule/", m[i]))
+```
+
