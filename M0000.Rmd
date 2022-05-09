@@ -1,5 +1,5 @@
 ---
-title: "Metabolite Details"
+title: "Molecule Details"
 output: 
   html_document:
     toc: true
@@ -12,13 +12,29 @@ params:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
-# Average Spectra
-
 ```{r}
 library(plotly)
 library(Spectra)
+library(xcms)
+library(MsCoreUtils)
+```
+
+
+`r paste0(m[i], ": ", cmps$name[cmps$compound_id == m[i]])`  
+`r paste("Formula:", cmps$formula[cmps$compound_id == m[i]])`  
+`r paste("Exact mass:", round(cmps$exactmass[cmps$compound_id == m[i]], 5))`    
+
+
+# Average Spectra
+
+```{r}
 tmp_sps <- sps[sps$compound_id == m[i]]
 tmp_sps <- tmp_sps[tmp_sps$raw_spectra == 0]
+```
+
+`r paste(tmp_sps$adduct, round(precursorMz(tmp_sps), 5))`
+
+```{r}
 tmp_dt <- data.frame(
   mz = unlist(mz(tmp_sps)),
   int = unlist(intensity(tmp_sps))
@@ -27,64 +43,103 @@ tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps), ]
 tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps), 0))
 tmp_dt$mz1 <- round(tmp_dt$mz, 4)
 tmp_dt$mz <- tmp_dt$mz
+tmp_dt$nl <- precursorMz(tmp_sps) - tmp_dt$mz
+tmp_dt$ann <- NA
+for(j in seq(nrow(tmp_dt))){
+  idx <- which(between(nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
+  if(length(idx) > 0){
+    tmp_dt$ann[j] <- paste(nl$name[idx], collapse = "-")
+  }
+  
+  idx <- which(between(ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+  if(length(idx) > 0){
+    tmp_dt$ann[j] <- paste(ions$name[idx], collapse = "-")
+  }
+  
+  idx <- which(between(precursorMz(tmp_sps), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+  if(length(idx) > 0){
+    tmp_dt$ann[j] <- tmp_sps$adduct
+  }
+}
+tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) &
+             is.na(tmp_dt$ann)] <- ""
+tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
+
 plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
         hovertext = ~mz1, hoverinfo = "text") %>% 
-  add_text(text=~mz1, hoverinfo='none', textposition = 'top') %>% 
+  add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
+           textposition = 'top') %>% 
   layout(title = 'MS/MS Spectrum', showlegend = FALSE, 
-         yaxis = list(title = "intensity"), 
-         xaxis = list(title = "m/z", showticklabels = FALSE))
+         yaxis = list(
+           title = "intensity", 
+           range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)), 
+         xaxis = list(title = "m/z"))
 ```
 
 
 # Individual Spectra
 
+
 ```{r}
-library(xcms)
-library(MsCoreUtils)
 tmp_sps <- sps[sps$compound_id == m[i]]
 tmp_sps <- tmp_sps[tmp_sps$raw_spectra == 1]
 do <- unique(tmp_sps$dataOrigin)
-if(length(do) > 1){
-  print("Update code!!!")
-} else {
-  ms1 <- readMSData(do, mode = "inMemory", msLevel. = 1L)
-  chr <- chromatogram(ms1,
-                      mz = mean(precursorMz(tmp_sps)) + 0.01 * c(-1, 1),
-                      rt = mean(rtime(tmp_sps)) + 30 * c(-1, 1))
-  dt1 <- data.frame(rt = rtime(chr[[1]]), 
-                    int = intensity(chr[[1]]))
-  dt2 <- data.frame(rt = rtime(tmp_sps))
-  dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
-  
-  a <- htmltools::tagList()
-  a[[1]] <- as.widget(
-    plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
-            type = "scatter") %>% 
-      add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
-                text= paste("Scan N.", tmp_sps$scanIndex)) %>% 
-      layout(title = 'EIC', yaxis = list(title = "intensity"), 
-             xaxis = list(title = "RT (min)"), showlegend = FALSE)
+ms1 <- readMSData(do, mode = "inMemory", msLevel. = 1L)
+rtr <- mean(rtime(tmp_sps)) + 60 * c(-1, 1)
+if(rtr[1] < 0){
+  rtr[1] <- 0
+}
+chr <- chromatogram(ms1,
+                    mz = mean(precursorMz(tmp_sps)) + 0.01 * c(-1, 1)#,
+                    #rt = rtr
+)
+dt1 <- data.frame(rt = rtime(chr[[1]]), 
+                  int = intensity(chr[[1]]))
+dt1$int[is.na(dt1$int)] <- 0
+dt2 <- data.frame(rt = rtime(tmp_sps))
+dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
+
+a <- htmltools::tagList()
+a[[1]] <- as.widget(
+  plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
+          type = "scatter") %>% 
+    add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
+              text= paste("Scan N.", tmp_sps$scanIndex)) %>% 
+    layout(title = 'EIC', yaxis = list(title = "intensity"), 
+           xaxis = list(title = "RT (min)"), showlegend = FALSE)
+)
+
+b <- htmltools::tagList()
+for(j in seq(length(tmp_sps))){
+  tmp_dt <- data.frame(
+    mz = mz(tmp_sps)[[j]],
+    int = intensity(tmp_sps)[[j]]
   )
+  tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps)[j], ]
+  tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps)[j], 0))
+  tmp_dt$mz1 <- round(tmp_dt$mz, 4)
+  #tmp_dt$mz <- as.factor(tmp_dt$mz)
+  fig1 <- plotly_empty() %>% 
+    add_text(x = 1, y = 1, textposition = "right", text = 
+               paste("\n Scan Number:", tmp_sps$scanIndex[j], "\n",
+                     "Precursor:", round(precursorMz(tmp_sps)[j], 4), "\n",
+                     "Retention time:", round(rtime(tmp_sps)[j]/60, 2), "\n",
+                     "Collision energy:", tmp_sps$collisionEnergy[j]))
+  fig2 <- plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+                  hovertext = ~mz1, hoverinfo = "text")  %>% 
+    layout(title = 'MS/MS Spectrum', showlegend = FALSE, 
+           yaxis = list(title = "intensity"), 
+           xaxis = list(title = "m/z", showticklabels = TRUE, 
+                        range = list(50, precursorMz(tmp_sps)[j]))) %>% 
+    add_text(text = tmp_dt$mz1, hoverinfo = 'none', textposition = 'top')
   
-  b <- htmltools::tagList()
-  for(j in seq(length(tmp_sps))){
-    tmp_dt <- data.frame(
-      mz = mz(tmp_sps)[[j]],
-      int = intensity(tmp_sps)[[j]]
-    )
-    tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps)[j], ]
-    tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps)[j], 0))
-    tmp_dt$mz1 <- round(tmp_dt$mz, 4)
-    tmp_dt$mz <- as.factor(tmp_dt$mz)
-    b[[j]] <- as.widget(
-      plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
-              hovertext = ~mz1, hoverinfo = "text")  %>% 
-        layout(title = 'MS/MS Spectrum', yaxis = list(title = "intensity"), 
-               xaxis = list(title = "m/z", showticklabels = FALSE))
-    )
-  }
+  b[[j]] <- as.widget(
+    subplot(fig1, fig2, widths = c(0.4, 0.6))
+  )
 }
 a
 b
 ```
 
+
+**Last update:** `r format(Sys.time(), "%d %b %Y")`
