@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
-```{r}
+```{r create-cdb}
 library(CompoundDb)
 
 cmps <- read.csv("molecules.csv")
@@ -21,12 +21,15 @@ if(!any(grepl("CompDb_inhouse_0", list.files()))){
     inchikey = NA_character_,
     formula = cmps$Formula,
     exactmass = MetaboCoreUtils::calculateMass(cmps$Formula),
-    rtime = NA,
+    rtime = cmps$RT_urine,
     synonyms = NA_character_,
-    class_super = cmps$class_super,
-    class_main = cmps$class_main,
-    class_sub = cmps$class_sub,
-    RefMet = cmps$RefMet
+    kingdom = cmps$kingdom,
+    superclass = cmps$superclass,
+    class = cmps$class,
+    subclass = cmps$subclass,
+    parent = cmps$parent,
+    RefMet = cmps$RefMet,
+    adducts = cmps$adduct
   )
   
   
@@ -41,26 +44,34 @@ if(!any(grepl("CompDb_inhouse_0", list.files()))){
                           path = getwd(), 
                           dbFile = "CompDb_inhouse_0.sqlite")
   rm(cmps, metad, db_file)
+  cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
+} else {
+  cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
+  cmps <- cmps[!cmps$ID_M %in% compounds(cdb, "compound_id"),]
 }
 
-cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
-
-cmps <- compounds(cdb, 
-                  columns = c("compound_id", "name", "formula", "exactmass",
-                              "class_super", "class_main", "class_sub",
-                              "RefMet"))
+cmps <- compounds(
+  cdb, 
+  columns = c("compound_id", "name", "formula", "exactmass",
+              "kingdom", "superclass", "class", "subclass", "parent",
+              "RefMet")
+  )
+cmps$exactmass <- round(cmps$exactmass, 5)
 colnames(cmps) <- c("ID_M", "Metabolite", "Formula", "Exact Mass", 
-                    "Super class", "Main class", "Sub class", "RefMet")
-cmps$ID_M <- paste0("<a href='molecule/",cmps$ID_M,".html'>",
-                    cmps$ID_M, "</a>") 
-cmps$RefMet <- paste0(
-  "<a href='https://www.metabolomicsworkbench.org/databases/refmet/refmet_details.php?REFMET_NAME=",
-  cmps$RefMet, "'>", cmps$RefMet, "</a>") 
+                    "Kingdom", "Superclass", "Class", "Subclass", "Parent", 
+                    "RefMet")
+idx <- which(cmps$ID_M %in% gsub("\\.html", "", list.files("molecule/")))
+cmps$ID_M[idx] <- paste0("<a href='molecule/", cmps$ID_M[idx],".html'>",
+                    cmps$ID_M[idx], "</a>") 
+idx <- which(!is.na(cmps$RefMet))
+cmps$RefMet[idx] <- paste0(
+  "<a href='https://www.metabolomicsworkbench.org/data/StructureData.php?RegNo=",
+  cmps$RefMet[idx], "'>", cmps$RefMet[idx], "</a>") 
 DT::datatable(cmps, escape = FALSE, rownames= FALSE)
 ```
 
 
-```{r}
+```{r ms2}
 # Define a function to remove low intensity peaks
 low_int <- function(x, ...) {
   x > max(x, na.rm = TRUE) * 0.05
@@ -119,12 +130,20 @@ if(nrow(ms2_tb) > 0){
     df$mz <- mz
     df$intensity <- intensity
     df$LC_method <- tmp_ms2_tb$LC_method
+    df$adduct <- tmp_ms2_tb$adduct
     sps <- Spectra(df)
     sps$compound_id <- tmp_ms2_tb$compound_id[1]
     sps$instrument <- "Orbitrap LTQ-XL"
     sps$raw_spectra <- TRUE
     cdb <- insertSpectra(cdb, spectra = sps)
     
+    precursorMz <- mean(precursorMz)
+    rt <- mean(rt)
+    p <- paste(unique(p), collapse = "-")
+    ce <- paste(unique(ce), collapse = "-")
+    lc <- paste(unique(df$LC_method), collapse = "-")
+    ad <- paste(unique(df$adduct), collapse = "-")
+    ins <- paste(unique(sps$instrument), collapse = "-")
     
     # Scale fragment intensities:
     sps <- addProcessing(sps, intensity = scale_int)
@@ -138,10 +157,21 @@ if(nrow(ms2_tb) > 0){
       tolerance = 0.01, minProp = 0.5, peaks = "intersect", 
       weighted = TRUE)
     
+    sps <- addProcessing(sps, intensity = scale_int)
     
+    sps$precursorMz <- precursorMz
+    sps$rtime <- rt
+    sps$scanIndex <- 0L
+    sps$polarity <- as.integer(p)
+    sps$collisionEnergy <- as.integer(ce)
+    sps$dataOrigin <- ""
+    sps$LC_method <- lc
+    sps$adduct <- ad
+    sps$instrument <- ins
     sps$raw_spectra <- FALSE
     cdb <- insertSpectra(cdb, spectra = sps)
   }
 }
 ```
 
+**Last update:** `r format(Sys.time(), "%d %b %Y")`
