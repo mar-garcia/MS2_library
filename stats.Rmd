@@ -1,0 +1,141 @@
+---
+title: "Library Statistics"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(CompoundDb)
+library(Spectra)
+library(plotly)
+cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
+sps <- Spectra(cdb)
+
+cid <- compounds(cdb, "compound_id")
+
+plot_ly(values = c(length(unique(sps$compound_id)), 
+                   (nrow(cid) - length(unique(sps$compound_id)))), 
+        labels = c("Yes", "No"), type = 'pie') %>%
+  layout(title = "Compounds with MS/MS spectra")
+```
+
+
+# MS2 spectras
+
+```{r}
+tmp <- data.frame(table(sps$compound_id[sps$raw_spectra == 1]))
+tmp <- data.frame(table(tmp$Freq))
+fig1 <- plot_ly(data = tmp, x = ~Var1, y = ~Freq, type = "bar")%>% 
+  layout(xaxis = list(title = "number of spectra"),
+         yaxis = list(title = "number of molecules"))
+
+tmp <- data.frame(table(sps$adduct[sps$raw_spectra == 1]))
+fig2 <- plot_ly(data = tmp, x = ~Var1, y = ~Freq, type = "bar") %>% 
+  layout(xaxis = list(title = "adduct"),
+         yaxis = list(title = "number of spectra"))
+subplot(fig1, fig2, titleX = TRUE, titleY = TRUE) %>%
+  layout(showlegend = FALSE, 
+         annotations = list(
+           list(x = 0.2, y = 1, text = "Molecules", showarrow = FALSE, xref='paper', yref='paper'),
+           list(x = 0.8, y = 1, text = "Adducts", showarrow = FALSE, xref='paper', yref='paper')
+         ))
+```
+
+
+# Elution order
+
+```{r, fig.width=10, fig.height = 7}
+tmp_sps <- sps[sps$raw_spectra == FALSE]
+fig1 <- plot_ly(x = rtime(tmp_sps)/60, y = precursorMz(tmp_sps), type = "scatter", 
+                color = tmp_sps$class, showlegend = FALSE, 
+                text = paste(tmp_sps$compound_id, tmp_sps$name, tmp_sps$adduct, "\n", 
+                             tmp_sps$superclass, "\n", tmp_sps$class, "\n",
+                             tmp_sps$subclass, "\n", tmp_sps$parent)) %>% 
+  layout(yaxis = list(title = "m/z value"), 
+         xaxis = list(range = list(0.1, 12)))
+
+cid <- compounds(cdb, c("compound_id", "name", "exactmass", "rtime", 
+                        "superclass", "class", "subclass", "parent"))
+
+fig2 <- plot_ly(x = cid$rtime, y = cid$exactmass, type = "scatter", 
+                color = cid$class, 
+                text = paste(cid$compound_id, cid$name, cid$adduct, "\n", 
+                             cid$superclass, "\n", cid$class, "\n",
+                             cid$subclass, "\n", cid$parent)) %>% 
+  layout(yaxis = list(title = "Exact Mass"), 
+         xaxis = list(title = "Retention Time", range = list(0.1, 12)))
+subplot(fig1, fig2, nrows = 2, titleX = TRUE, titleY = TRUE) %>%
+  layout(plot_bgcolor = '#e5ecf6', 
+         annotations = list(
+           list(x = 6, y = 300, text = "Molecules with MS/MS spectra", 
+                showarrow = FALSE),
+           list(x = 6, y = 0.45, text = "All Molecules", 
+                yref = "paper", yanchor = "bottom", showarrow = FALSE)
+         )
+  )
+```
+
+
+# Classes of Compounds
+
+```{r}
+cid$parent[cid$name %in% c("Ala-Leu", "Ala-Phe", "Ala-Pro", "Ala-Tyr")] <- "Dipeptides"
+cid$parent[cid$name %in% c("Alanine", "Acetylornithine")] <- "Aminoacids"
+
+tmp <- data.frame(table(cid$superclass))
+plot_ly(values = tmp$Freq, labels = tmp$Var1, type = 'pie') %>%
+  layout(title = "Superclass")
+
+rc <- rbind(
+  c(0, 0),
+  c(0, 1),
+  c(1, 0),
+  c(1, 1)
+  )
+
+fig <- plot_ly()
+for(i in seq(nrow(tmp))){
+  tmp2 <- data.frame(table(cid$class[cid$superclass == tmp$Var1[i]]))
+  fig <- fig %>% add_pie(data = tmp2, labels = ~Var1, values = ~Freq,
+                         name = tmp$Var1[i], 
+                         domain = list(row = rc[i, 1], column = rc[i, 2]))
+}
+fig <- fig %>% layout(title = "Class", grid = list(rows = 2, columns = 2))
+fig
+
+tmp <- data.frame(table(cid$class))
+if(nrow(tmp) > 4){
+  tmp <- tmp[tmp$Freq > 1, ]
+}
+fig <- plot_ly()
+for(i in seq(nrow(tmp))){
+  tmp2 <- data.frame(table(cid$subclass[cid$class == tmp$Var1[i]]))
+  fig <- fig %>% add_pie(data = tmp2, labels = ~Var1, values = ~Freq,
+                         name = tmp$Var1[i], 
+                         domain = list(row = rc[i, 1], column = rc[i, 2]))
+}
+fig <- fig %>% layout(title = "Subclass", grid = list(rows = 2, columns = 2))
+fig
+
+tmp <- data.frame(table(cid$subclass))
+if(nrow(tmp) > 4){
+  tmp <- tmp[tmp$Freq > 1, ]
+}
+fig <- plot_ly()
+for(i in seq(nrow(tmp))){
+  tmp2 <- data.frame(table(cid$parent[cid$subclass == tmp$Var1[i]]))
+  fig <- fig %>% add_pie(data = tmp2, labels = ~Var1, values = ~Freq,
+                         name = tmp$Var1[i], 
+                         domain = list(row = rc[i, 1], column = rc[i, 2]))
+}
+fig <- fig %>% layout(title = "Parent", grid = list(rows = 2, columns = 2))
+fig
+```
+
+**Last update:** `r format(Sys.time(), "%d %b %Y")`
