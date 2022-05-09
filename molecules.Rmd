@@ -9,17 +9,41 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r libraries, message=FALSE}
 library(CompoundDb)
+library(MetaboCoreUtils)
+```
+
+```{r nl}
+nl <- data.frame(rbind(
+  c("[M+H-H2O]+", calculateMass("H2O"), 1),
+  c("[M+H-H2O-CO]+", calculateMass("H2OCO"), 1)#,
+  #c("[M+H-Ala]+", calculateMass(subtractElements("C3H7NO2", "H2O")), 1)
+))
+
+ions <- data.frame(rbind(
+  c("[Leu+H]+", mass2mz(calculateMass("C6H13NO2"), "[M+H]+"), 1),
+  c("[Leu+H-H2O-CO]+", mass2mz(calculateMass(subtractElements("C6H13NO2", "H2OCO")), "[M+H]+"), 1),
+  c("Flavonoid 1,3A+", mass2mz(calculateMass("C7H4O4"), "[M+H]+"), 1)
+))
+
+colnames(nl) <- colnames(ions) <- c("name", "mass", "polarity")
+nl$mass <- as.numeric(nl$mass)
+ions$mass <- as.numeric(ions$mass)
 ```
 
 ```{r x}
 cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
-sps <- Spectra(cdb)
+sps <- Spectra::Spectra(cdb)
+cmps <- compounds(cdb, c("compound_id", "name", "formula", "exactmass"))
 
 m <- unique(sps$compound_id)
-# EXCLUDE METABOLITES ALREADY PROCESSED!!!
-i <- 1
-rmarkdown::render("M0000.Rmd", 
-                  params = list(metabolite = m[i]),
-                  output_file = paste0("molecule/", m[i]))
+
+#i <- 1
+for(i in seq(length(m))){
+  if(!any(grepl(m[i], list.files("molecule/")))){
+    rmarkdown::render("M0000.Rmd", 
+                    params = list(metabolite = m[i]),
+                    output_file = paste0("molecule/", m[i]))
+  }
+}
 ```
 
