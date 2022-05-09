@@ -45,15 +45,20 @@ tmp_dt$mz1 <- round(tmp_dt$mz, 4)
 tmp_dt$mz <- tmp_dt$mz
 tmp_dt$nl <- precursorMz(tmp_sps) - tmp_dt$mz
 tmp_dt$ann <- NA
+tmp_nl <- nl[nl$polarity == tmp_sps$polarity, ]
+tmp_ions <- ions[ions$polarity == tmp_sps$polarity,]
+if(m[i] == "M0007"){ # Phenylalanine
+  tmp_ions <- tmp_ions[!grepl("Phe", tmp_ions$name),]
+} 
 for(j in seq(nrow(tmp_dt))){
-  idx <- which(between(nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
+  idx <- which(between(tmp_nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
   if(length(idx) > 0){
-    tmp_dt$ann[j] <- paste(nl$name[idx], collapse = "-")
+    tmp_dt$ann[j] <- paste(tmp_nl$name[idx], collapse = "-")
   }
   
-  idx <- which(between(ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+  idx <- which(between(tmp_ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
   if(length(idx) > 0){
-    tmp_dt$ann[j] <- paste(ions$name[idx], collapse = "-")
+    tmp_dt$ann[j] <- paste(tmp_ions$name[idx], collapse = "-")
   }
   
   idx <- which(between(precursorMz(tmp_sps), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
@@ -69,11 +74,11 @@ plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar",
         hovertext = ~mz1, hoverinfo = "text") %>% 
   add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
            textposition = 'top') %>% 
-  layout(title = 'MS/MS Spectrum', showlegend = FALSE, 
+  layout(title = 'MS/MS Spectrum', showlegend = FALSE,
+         xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
          yaxis = list(
            title = "intensity", 
-           range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)), 
-         xaxis = list(title = "m/z"))
+           range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
 ```
 
 
