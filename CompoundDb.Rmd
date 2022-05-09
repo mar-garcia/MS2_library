@@ -47,7 +47,7 @@ if(!any(grepl("CompDb_inhouse_0", list.files()))){
   cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
 } else {
   cdb <- CompDb("CompDb_inhouse_0.sqlite", flags = RSQLite::SQLITE_RW)
-  cmps <- cmps[!cmps$ID_M %in% compounds(cdb, "compound_id"),]
+  cmps <- cmps[!cmps$ID_M %in% compounds(cdb, "compound_id")[,1],]
 }
 
 cmps <- compounds(
