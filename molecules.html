@@ -370,13 +370,22 @@ pre code {
 library(MetaboCoreUtils)</code></pre>
 <pre class="r"><code>nl &lt;- data.frame(rbind(
   c(&quot;[M+H-H2O]+&quot;, calculateMass(&quot;H2O&quot;), 1),
-  c(&quot;[M+H-H2O-CO]+&quot;, calculateMass(&quot;H2OCO&quot;), 1)#,
-  #c(&quot;[M+H-Ala]+&quot;, calculateMass(subtractElements(&quot;C3H7NO2&quot;, &quot;H2O&quot;)), 1)
+  c(&quot;[M+H-2(H2O)]+&quot;, calculateMass(&quot;H2OH2O&quot;), 1),
+  c(&quot;[M+H-H2O-NH3]+&quot;, calculateMass(&quot;H2ONH3&quot;), 1),
+  c(&quot;[M+H-H2O-CO]+&quot;, calculateMass(&quot;H2OCO&quot;), 1),
+  c(&quot;[M+H-NH3]+&quot;, calculateMass(&quot;NH3&quot;), 1),
+  c(&quot;[M+H-Glu]+&quot;, calculateMass(subtractElements(&quot;C5H9NO4&quot;, &quot;H2O&quot;)), 1),
+  c(&quot;[M+H-Gly]+&quot;, calculateMass(subtractElements(&quot;C2H5NO2&quot;, &quot;H2O&quot;)), 1),
+  c(&quot;[M+H-Gly-H2O]+&quot;, calculateMass(&quot;C2H5NO2&quot;), 1)
 ))
 
 ions &lt;- data.frame(rbind(
+  c(&quot;[Glu+H]+&quot;, mass2mz(calculateMass(&quot;C5H10N2O3&quot;), &quot;[M+H]+&quot;), 1),
+  c(&quot;[Glu+H-NH3]+&quot;, mass2mz(calculateMass(subtractElements(&quot;C5H10N2O3&quot;, &quot;NH3&quot;)), &quot;[M+H]+&quot;), 1),
   c(&quot;[Leu+H]+&quot;, mass2mz(calculateMass(&quot;C6H13NO2&quot;), &quot;[M+H]+&quot;), 1),
   c(&quot;[Leu+H-H2O-CO]+&quot;, mass2mz(calculateMass(subtractElements(&quot;C6H13NO2&quot;, &quot;H2OCO&quot;)), &quot;[M+H]+&quot;), 1),
+  c(&quot;[Phe+H]+&quot;, mass2mz(calculateMass(&quot;C9H11NO2&quot;), &quot;[M+H]+&quot;), 1),
+  c(&quot;[Phe+H-H2O-CO]+&quot;, mass2mz(calculateMass(subtractElements(&quot;C9H11NO2&quot;, &quot;H2OCO&quot;)), &quot;[M+H]+&quot;), 1),
   c(&quot;Flavonoid 1,3A+&quot;, mass2mz(calculateMass(&quot;C7H4O4&quot;), &quot;[M+H]+&quot;), 1)
 ))
 
@@ -391,11 +400,11 @@ m &lt;- unique(sps$compound_id)
 
 #i &lt;- 1
 for(i in seq(length(m))){
-  #if(!any(grepl(m[i], list.files(&quot;molecule/&quot;)))){
+  if(!any(grepl(m[i], list.files(&quot;molecule/&quot;)))){
     rmarkdown::render(&quot;M0000.Rmd&quot;, 
                     params = list(metabolite = m[i]),
                     output_file = paste0(&quot;molecule/&quot;, m[i]))
-  #}
+  }
 }</code></pre>
 <pre><code>## 
 ## 
@@ -546,153 +555,9 @@ for(i in seq(length(m))){
   |......................................................................| 100%
 ##    inline R code fragments</code></pre>
 <pre><code>## output file: M0000.knit.md</code></pre>
-<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0001.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\Rtmp08mlnM\rmarkdown-str39244c527ab4.html&quot;</code></pre>
+<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0007.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\RtmpO8ZeRq\rmarkdown-str258c62565ad.html&quot;</code></pre>
 <pre><code>## 
-## Output created: molecule/M0001.html</code></pre>
-<pre><code>## 
-## 
-## processing file: M0000.Rmd</code></pre>
-<pre><code>## 
-  |                                                                            
-  |                                                                      |   0%
-  |                                                                            
-  |......                                                                |   9%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |.............                                                         |  18%
-## label: setup (with options) 
-## List of 1
-##  $ include: logi FALSE
-## 
-## 
-  |                                                                            
-  |...................                                                   |  27%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |.........................                                             |  36%
-## label: unnamed-chunk-1
-## 
-  |                                                                            
-  |................................                                      |  45%
-##    inline R code fragments
-## 
-## 
-  |                                                                            
-  |......................................                                |  55%
-## label: unnamed-chunk-2
-## 
-  |                                                                            
-  |.............................................                         |  64%
-##    inline R code fragments
-## 
-## 
-  |                                                                            
-  |...................................................                   |  73%
-## label: unnamed-chunk-3
-## 
-  |                                                                            
-  |.........................................................             |  82%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |................................................................      |  91%
-## label: unnamed-chunk-4</code></pre>
-<pre><code>## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)
-
-## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)
-
-## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)</code></pre>
-<pre><code>## 
-  |                                                                            
-  |......................................................................| 100%
-##    inline R code fragments</code></pre>
-<pre><code>## output file: M0000.knit.md</code></pre>
-<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0002.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\Rtmp08mlnM\rmarkdown-str39243d723745.html&quot;</code></pre>
-<pre><code>## 
-## Output created: molecule/M0002.html
-## 
-## 
-## processing file: M0000.Rmd</code></pre>
-<pre><code>## 
-  |                                                                            
-  |                                                                      |   0%
-  |                                                                            
-  |......                                                                |   9%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |.............                                                         |  18%
-## label: setup (with options) 
-## List of 1
-##  $ include: logi FALSE
-## 
-## 
-  |                                                                            
-  |...................                                                   |  27%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |.........................                                             |  36%
-## label: unnamed-chunk-1
-## 
-  |                                                                            
-  |................................                                      |  45%
-##    inline R code fragments
-## 
-## 
-  |                                                                            
-  |......................................                                |  55%
-## label: unnamed-chunk-2
-## 
-  |                                                                            
-  |.............................................                         |  64%
-##    inline R code fragments
-## 
-## 
-  |                                                                            
-  |...................................................                   |  73%
-## label: unnamed-chunk-3
-## 
-  |                                                                            
-  |.........................................................             |  82%
-##   ordinary text without R code
-## 
-## 
-  |                                                                            
-  |................................................................      |  91%
-## label: unnamed-chunk-4</code></pre>
-<pre><code>## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)
-
-## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)
-
-## Warning: &#39;as.widget&#39; is deprecated.
-## Use &#39;as_widget&#39; instead.
-## See help(&quot;Deprecated&quot;)</code></pre>
-<pre><code>## 
-  |                                                                            
-  |......................................................................| 100%
-##    inline R code fragments</code></pre>
-<pre><code>## output file: M0000.knit.md</code></pre>
-<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0003.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\Rtmp08mlnM\rmarkdown-str39241ea35cdd.html&quot;</code></pre>
-<pre><code>## 
-## Output created: molecule/M0003.html</code></pre>
+## Output created: molecule/M0007.html</code></pre>
 
 
 

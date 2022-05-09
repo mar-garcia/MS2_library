@@ -85,8 +85,16 @@ subplot(fig1, fig2, nrows = 2, titleX = TRUE, titleY = TRUE) %>%
 # Classes of Compounds
 
 ```{r}
-cid$parent[cid$name %in% c("Ala-Leu", "Ala-Phe", "Ala-Pro", "Ala-Tyr")] <- "Dipeptides"
-cid$parent[cid$name %in% c("Alanine", "Acetylornithine")] <- "Aminoacids"
+cid$parent[cid$name %in% c(
+  "Ala-Leu", "Ala-Phe", "Ala-Pro", "Ala-Tyr", 
+  "Asp-Phe",
+  "Gly-Glu",
+  "Leu-Ala")] <- "Dipeptides"
+cid$parent[cid$name %in% c(
+  "Alanine", "Aspartic acid", "Glutamine", "Leucine", "Isoleucine", "Lysine",
+  "Phenylalanine", "Serine", "Valine", 
+  "Acetylornithine", "N-Carbamyl-L-glutamic acid", "N-(2-Furoyl)glycine",
+  "Hydroxyarginine")] <- "Aminoacids"
 
 tmp <- data.frame(table(cid$superclass))
 plot_ly(values = tmp$Freq, labels = tmp$Var1, type = 'pie') %>%
@@ -100,6 +108,9 @@ rc <- rbind(
   )
 
 fig <- plot_ly()
+if(nrow(tmp) > 4){
+  tmp <- tmp[tmp$Freq > 1, ]
+}
 for(i in seq(nrow(tmp))){
   tmp2 <- data.frame(table(cid$class[cid$superclass == tmp$Var1[i]]))
   fig <- fig %>% add_pie(data = tmp2, labels = ~Var1, values = ~Freq,
@@ -111,7 +122,7 @@ fig
 
 tmp <- data.frame(table(cid$class))
 if(nrow(tmp) > 4){
-  tmp <- tmp[tmp$Freq > 1, ]
+  tmp <- tmp[tmp$Freq > 2, ]
 }
 fig <- plot_ly()
 for(i in seq(nrow(tmp))){
