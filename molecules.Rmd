@@ -23,7 +23,11 @@ nl <- data.frame(rbind(
   c("[M+H-Gly]+", calculateMass(subtractElements("C2H5NO2", "H2O")), 1),
   c("[M+H-Gly-H2O]+", calculateMass("C2H5NO2"), 1),
   
-  c("[M-H-CO2]-", calculateMass("CO2"), 0)
+  c("[M-H-NH3]-", calculateMass("NH3"), 0),
+  c("[M-H-H2O]-", calculateMass("H2O"), 0),
+  c("[M-H-CO2]-", calculateMass("CO2"), 0),
+  c("[M-H-C2H2O]-", calculateMass("C2H2O"), 0),
+  c("[M-H-CONH]-", calculateMass("CONH"), 0)
 ))
 
 ions <- data.frame(rbind(
@@ -35,7 +39,14 @@ ions <- data.frame(rbind(
   c("[Phe+H-H2O-CO]+", mass2mz(calculateMass(subtractElements("C9H11NO2", "H2OCO")), "[M+H]+"), 1),
   c("[Tyr+H]+", mass2mz(calculateMass("C9H11NO3"), "[M+H]+"), 1),
   c("[Tyr+H-H2O-CO]+", mass2mz(calculateMass(subtractElements("C9H11NO3", "H2OCO")), "[M+H]+"), 1),
-  c("Flavonoid 1,3A+", mass2mz(calculateMass("C7H4O4"), "[M+H]+"), 1)
+  c("Flavonoid 1,3A+", mass2mz(calculateMass("C7H4O4"), "[M+H]+"), 1),
+  
+  c("[Phe-H]-", mass2mz(calculateMass("C9H11NO2"), "[M-H]-"), 0),
+  c("[Phe-H-NH3]-", mass2mz(calculateMass(subtractElements("C9H11NO2", "NH3")), "[M-H]-"), 0),
+  c("[Pro-H]-", mass2mz(calculateMass("C5H9NO2"), "[M-H]-"), 0),
+  c("[Pro-H-H2O]-", mass2mz(calculateMass(subtractElements("C5H9NO2", "H2O")), "[M-H]-"), 0),
+  c("[Tyr-H]-", mass2mz(calculateMass("C9H11NO3"), "[M-H]-"), 0),
+  c("[Tyr-H-NH3]-", mass2mz(calculateMass(subtractElements("C9H11NO3", "NH3")), "[M-H]-"), 0)
 ))
 
 colnames(nl) <- colnames(ions) <- c("name", "mass", "polarity")
@@ -50,13 +61,13 @@ cmps <- compounds(cdb, c("compound_id", "name", "formula", "exactmass"))
 
 m <- unique(sps$compound_id)
 
-i <- 7
-#for(i in seq(length(m))){
-#  if(!any(grepl(m[i], list.files("molecule/")))){
+#i <- 7
+for(i in seq(length(m))){
+  if(!any(grepl(m[i], list.files("molecule/")))){
     rmarkdown::render("M0000.Rmd", 
                     params = list(metabolite = m[i]),
                     output_file = paste0("molecule/", m[i]))
-#  }
-#}
+  }
+}
 ```
 

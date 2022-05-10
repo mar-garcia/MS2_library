@@ -154,7 +154,7 @@ if(nrow(ms2_tb) > 0){
     # Combine all spectras:
     sps <- Spectra::combineSpectra(
       sps, mzFun = base::mean, intensityFun = base::mean, # OR "sum"? 
-      tolerance = 0.01, minProp = 0.5, peaks = "intersect", 
+      tolerance = 0.02, minProp = 0.5, peaks = "intersect", 
       weighted = TRUE)
     
     sps <- addProcessing(sps, intensity = scale_int)

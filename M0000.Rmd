@@ -30,9 +30,9 @@ library(MsCoreUtils)
 ```{r comment=NA, results='asis'}
 tmp_sps <- sps[sps$compound_id == m[i]]
 tmp_sps <- tmp_sps[tmp_sps$raw_spectra == 0]
-p <- unique(tmp_sps$polarity)
+a <- unique(tmp_sps$adduct)
 k <- 1
-tmp_sps2 <- tmp_sps[tmp_sps$polarity == p[k]]
+tmp_sps2 <- tmp_sps[tmp_sps$adduct == a[k]]
 cat(paste(tmp_sps2$adduct, round(precursorMz(tmp_sps2), 5)))
 tmp_dt <- data.frame(
   mz = unlist(mz(tmp_sps2)),
@@ -80,54 +80,56 @@ htmltools::tagList(
              range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
 )
 
-for(k in 2:length(p)){
-  tmp_sps2 <- tmp_sps[tmp_sps$polarity == p[k]]
-  cat(paste(tmp_sps2$adduct, round(precursorMz(tmp_sps2), 5)))
-  tmp_dt <- data.frame(
-    mz = unlist(mz(tmp_sps2)),
-    int = unlist(intensity(tmp_sps2))
-  )
-  tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps2), ]
-  tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps2), 0))
-  tmp_dt$mz1 <- round(tmp_dt$mz, 4)
-  tmp_dt$mz <- tmp_dt$mz
-  tmp_dt$nl <- precursorMz(tmp_sps2) - tmp_dt$mz
-  tmp_dt$ann <- NA
-  tmp_nl <- nl[nl$polarity == tmp_sps2$polarity, ]
-  tmp_ions <- ions[ions$polarity == tmp_sps2$polarity,]
-  if(m[i] == "M0007"){ # Phenylalanine
-    tmp_ions <- tmp_ions[!grepl("Phe", tmp_ions$name),]
-  } 
-  for(j in seq(nrow(tmp_dt))){
-    idx <- which(between(tmp_nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
-    if(length(idx) > 0){
-      tmp_dt$ann[j] <- paste(tmp_nl$name[idx], collapse = "-")
+if(length(a) > 1){
+  for(k in 2:length(a)){
+    tmp_sps2 <- tmp_sps[tmp_sps$adduct == a[k]]
+    cat(paste(tmp_sps2$adduct, round(precursorMz(tmp_sps2), 5)))
+    tmp_dt <- data.frame(
+      mz = unlist(mz(tmp_sps2)),
+      int = unlist(intensity(tmp_sps2))
+    )
+    tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps2), ]
+    tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps2), 0))
+    tmp_dt$mz1 <- round(tmp_dt$mz, 4)
+    tmp_dt$mz <- tmp_dt$mz
+    tmp_dt$nl <- precursorMz(tmp_sps2) - tmp_dt$mz
+    tmp_dt$ann <- NA
+    tmp_nl <- nl[nl$polarity == tmp_sps2$polarity, ]
+    tmp_ions <- ions[ions$polarity == tmp_sps2$polarity,]
+    if(m[i] == "M0007"){ # Phenylalanine
+      tmp_ions <- tmp_ions[!grepl("Phe", tmp_ions$name),]
+    } 
+    for(j in seq(nrow(tmp_dt))){
+      idx <- which(between(tmp_nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
+      if(length(idx) > 0){
+        tmp_dt$ann[j] <- paste(tmp_nl$name[idx], collapse = "-")
+      }
+      
+      idx <- which(between(tmp_ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+      if(length(idx) > 0){
+        tmp_dt$ann[j] <- paste(tmp_ions$name[idx], collapse = "-")
+      }
+      
+      idx <- which(between(precursorMz(tmp_sps2), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+      if(length(idx) > 0){
+        tmp_dt$ann[j] <- tmp_sps2$adduct
+      }
     }
+    tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) & is.na(tmp_dt$ann)] <- ""
+    tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
     
-    idx <- which(between(tmp_ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
-    if(length(idx) > 0){
-      tmp_dt$ann[j] <- paste(tmp_ions$name[idx], collapse = "-")
-    }
-    
-    idx <- which(between(precursorMz(tmp_sps2), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
-    if(length(idx) > 0){
-      tmp_dt$ann[j] <- tmp_sps2$adduct
-    }
+    print(htmltools::tagList(
+      plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+              hovertext = ~mz1, hoverinfo = "text") %>% 
+        add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
+                 textposition = 'top') %>% 
+        layout(title = 'MS/MS Spectrum', showlegend = FALSE,
+               xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
+               yaxis = list(
+                 title = "intensity", 
+                 range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
+    ))
   }
-  tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) & is.na(tmp_dt$ann)] <- ""
-  tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
-  
-  print(htmltools::tagList(
-    plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
-            hovertext = ~mz1, hoverinfo = "text") %>% 
-      add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
-               textposition = 'top') %>% 
-      layout(title = 'MS/MS Spectrum', showlegend = FALSE,
-             xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
-             yaxis = list(
-               title = "intensity", 
-               range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
-  ))
 }
 ```
 
@@ -139,52 +141,57 @@ tmp_sps <- sps[sps$compound_id == m[i]]
 tmp_sps <- tmp_sps[tmp_sps$raw_spectra == 1]
 do <- unique(tmp_sps$dataOrigin)
 
-for(k in 1:length(do)){
+for(k in seq(length(do))){
   tmp_sps2 <- tmp_sps[tmp_sps$dataOrigin == do[k],]
   ms1 <- readMSData(do[k], mode = "inMemory", msLevel. = 1L)
-  chr <- chromatogram(ms1, mz = mean(precursorMz(tmp_sps2)) + 0.01 * c(-1, 1))
-  dt1 <- data.frame(rt = rtime(chr[[1]]), 
-                    int = intensity(chr[[1]]))
-  dt1$int[is.na(dt1$int)] <- 0
-  dt2 <- data.frame(rt = rtime(tmp_sps2))
-  dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
-  
-  print(htmltools::tagList(
-    plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
-            type = "scatter") %>% 
-      add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
-                text= paste("Scan N.", tmp_sps2$scanIndex)) %>% 
-      layout(title = basename(do[k]), 
-             yaxis = list(title = "intensity"), 
-             xaxis = list(title = "RT (min)"), showlegend = FALSE)
-  ))
-  
-  for(j in seq(length(tmp_sps2))){
-    tmp_dt <- data.frame(
-      mz = mz(tmp_sps2)[[j]],
-      int = intensity(tmp_sps2)[[j]]
-    )
-    tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps2)[j], ]
-    tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps2)[j], 0))
-    tmp_dt$mz1 <- round(tmp_dt$mz, 4)
-    #tmp_dt$mz <- as.factor(tmp_dt$mz)
-    fig1 <- plotly_empty() %>% 
-      add_text(x = 1, y = 1, textposition = "right", text = 
-                 paste("\n Scan Number:", tmp_sps2$scanIndex[j], "\n",
-                       "Precursor:", round(precursorMz(tmp_sps2)[j], 4), "\n",
-                       "Retention time:", round(rtime(tmp_sps2)[j]/60, 2), "\n",
-                       "Collision energy:", tmp_sps2$collisionEnergy[j]))
-    fig2 <- plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
-                    hovertext = ~mz1, hoverinfo = "text")  %>% 
-      layout(title = 'MS/MS Spectrum', showlegend = FALSE, 
-             yaxis = list(title = "intensity"), 
-             xaxis = list(title = "m/z", showticklabels = TRUE, 
-                          range = list(50, precursorMz(tmp_sps2)[j]))) %>% 
-      add_text(text = tmp_dt$mz1, hoverinfo = 'none', textposition = 'top')
+  a <- unique(tmp_sps2$adduct)
+  for(l in seq(length(a))){
+    tmp_sps3 <- tmp_sps2[tmp_sps2$adduct == a[l],]
+    chr <- chromatogram(ms1, mz = mean(precursorMz(tmp_sps3)) + 0.01 * c(-1, 1))
+    dt1 <- data.frame(rt = rtime(chr[[1]]), 
+                      int = intensity(chr[[1]]))
+    dt1$int[is.na(dt1$int)] <- 0
+    dt2 <- data.frame(rt = rtime(tmp_sps3))
+    dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
     
     print(htmltools::tagList(
-      subplot(fig1, fig2, widths = c(0.4, 0.6))
+      plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
+              type = "scatter") %>% 
+        add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
+                  text= paste("Scan N.", tmp_sps3$scanIndex)) %>% 
+        layout(title = paste0(
+          basename(do[k]), ": ", round(mean(precursorMz(tmp_sps3)), 4)), 
+               yaxis = list(title = "intensity"), 
+               xaxis = list(title = "RT (min)"), showlegend = FALSE)
     ))
+    
+    for(j in seq(length(tmp_sps3))){
+      tmp_dt <- data.frame(
+        mz = mz(tmp_sps3)[[j]],
+        int = intensity(tmp_sps3)[[j]]
+      )
+      tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps3)[j], ]
+      tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps3)[j], 0))
+      tmp_dt$mz1 <- round(tmp_dt$mz, 4)
+      #tmp_dt$mz <- as.factor(tmp_dt$mz)
+      fig1 <- plotly_empty() %>% 
+        add_text(x = 1, y = 1, textposition = "right", text = 
+                   paste("\n Scan Number:", tmp_sps3$scanIndex[j], "\n",
+                         "Precursor:", round(precursorMz(tmp_sps3)[j], 4), "\n",
+                         "Retention time:", round(rtime(tmp_sps3)[j]/60, 2), "\n",
+                         "Collision energy:", tmp_sps3$collisionEnergy[j]))
+      fig2 <- plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+                      hovertext = ~mz1, hoverinfo = "text")  %>% 
+        layout(title = 'MS/MS Spectrum', showlegend = FALSE, 
+               yaxis = list(title = "intensity"), 
+               xaxis = list(title = "m/z", showticklabels = TRUE, 
+                            range = list(50, precursorMz(tmp_sps3)[j]))) %>% 
+        add_text(text = tmp_dt$mz1, hoverinfo = 'none', textposition = 'top')
+      
+      print(htmltools::tagList(
+        subplot(fig1, fig2, widths = c(0.4, 0.6))
+      ))
+    }
   }
 }
 ```
