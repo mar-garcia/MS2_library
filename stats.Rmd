@@ -52,6 +52,7 @@ subplot(fig1, fig2, titleX = TRUE, titleY = TRUE) %>%
 
 ```{r, fig.width=10, fig.height = 7}
 tmp_sps <- sps[sps$raw_spectra == FALSE]
+tmp_sps <- tmp_sps[!duplicated(tmp_sps$compound_id),]
 fig1 <- plot_ly(x = rtime(tmp_sps)/60, y = precursorMz(tmp_sps), type = "scatter", 
                 color = tmp_sps$class, showlegend = FALSE, 
                 text = paste(tmp_sps$compound_id, tmp_sps$name, tmp_sps$adduct, "\n", 
