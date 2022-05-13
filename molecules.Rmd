@@ -61,7 +61,7 @@ cmps <- compounds(cdb, c("compound_id", "name", "formula", "exactmass"))
 
 m <- unique(sps$compound_id)
 
-#i <- 7
+#i <- which(m == "M0032")
 for(i in seq(length(m))){
   if(!any(grepl(m[i], list.files("molecule/")))){
     rmarkdown::render("M0000.Rmd", 

@@ -69,9 +69,13 @@ tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) & is.na(tmp_dt$ann)] <- ""
 tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
 
 htmltools::tagList(
-  plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
-          hovertext = ~mz1, hoverinfo = "text") %>% 
-    add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
+  #plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+  #        hovertext = ~mz1, hoverinfo = "text") %>% 
+  plot_ly(tmp_dt) %>%
+    add_trace(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+              hovertext = ~mz1, hoverinfo = "text", width = 0.05) %>% 
+    add_text(x = ~mz, y = ~int,
+             text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
              textposition = 'top') %>% 
     layout(title = 'MS/MS Spectrum', showlegend = FALSE,
            xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
@@ -83,52 +87,58 @@ htmltools::tagList(
 if(length(a) > 1){
   for(k in 2:length(a)){
     tmp_sps2 <- tmp_sps[tmp_sps$adduct == a[k]]
-    cat(paste(tmp_sps2$adduct, round(precursorMz(tmp_sps2), 5)))
-    tmp_dt <- data.frame(
-      mz = unlist(mz(tmp_sps2)),
-      int = unlist(intensity(tmp_sps2))
-    )
-    tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps2), ]
-    tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps2), 0))
-    tmp_dt$mz1 <- round(tmp_dt$mz, 4)
-    tmp_dt$mz <- tmp_dt$mz
-    tmp_dt$nl <- precursorMz(tmp_sps2) - tmp_dt$mz
-    tmp_dt$ann <- NA
-    tmp_nl <- nl[nl$polarity == tmp_sps2$polarity, ]
-    tmp_ions <- ions[ions$polarity == tmp_sps2$polarity,]
-    if(m[i] == "M0007"){ # Phenylalanine
-      tmp_ions <- tmp_ions[!grepl("Phe", tmp_ions$name),]
-    } 
-    for(j in seq(nrow(tmp_dt))){
-      idx <- which(between(tmp_nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
-      if(length(idx) > 0){
-        tmp_dt$ann[j] <- paste(tmp_nl$name[idx], collapse = "-")
+    if(length(tmp_sps2$raw_spectra) > 1){
+      print(paste("Warning!! There is >1 average spectra for", a[k], "!!!"))
+    } else {
+      cat(paste(tmp_sps2$adduct, round(precursorMz(tmp_sps2), 5)))
+      tmp_dt <- data.frame(
+        mz = unlist(mz(tmp_sps2)),
+        int = unlist(intensity(tmp_sps2))
+      )
+      tmp_dt <- tmp_dt[tmp_dt$mz <= precursorMz(tmp_sps2), ]
+      tmp_dt <- rbind(tmp_dt, c(precursorMz(tmp_sps2), 0))
+      tmp_dt$mz1 <- round(tmp_dt$mz, 4)
+      tmp_dt$mz <- tmp_dt$mz
+      tmp_dt$nl <- precursorMz(tmp_sps2) - tmp_dt$mz
+      tmp_dt$ann <- NA
+      tmp_nl <- nl[nl$polarity == tmp_sps2$polarity, ]
+      tmp_ions <- ions[ions$polarity == tmp_sps2$polarity,]
+      if(m[i] == "M0007"){ # Phenylalanine
+        tmp_ions <- tmp_ions[!grepl("Phe", tmp_ions$name),]
+      } 
+      for(j in seq(nrow(tmp_dt))){
+        idx <- which(between(tmp_nl$mass, tmp_dt$nl[j] + 0.01 * c(-1, 1)))
+        if(length(idx) > 0){
+          tmp_dt$ann[j] <- paste(tmp_nl$name[idx], collapse = "-")
+        }
+        
+        idx <- which(between(tmp_ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+        if(length(idx) > 0){
+          tmp_dt$ann[j] <- paste(tmp_ions$name[idx], collapse = "-")
+        }
+        
+        idx <- which(between(precursorMz(tmp_sps2), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
+        if(length(idx) > 0){
+          tmp_dt$ann[j] <- tmp_sps2$adduct
+        }
       }
+      tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) & is.na(tmp_dt$ann)] <- ""
+      tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
       
-      idx <- which(between(tmp_ions$mass, tmp_dt$mz[j] + 0.01 * c(-1, 1)))
-      if(length(idx) > 0){
-        tmp_dt$ann[j] <- paste(tmp_ions$name[idx], collapse = "-")
-      }
-      
-      idx <- which(between(precursorMz(tmp_sps2), tmp_dt$mz[j] + 0.01 * c(-1, 1)))
-      if(length(idx) > 0){
-        tmp_dt$ann[j] <- tmp_sps2$adduct
-      }
+      print(htmltools::tagList(
+        plot_ly(tmp_dt) %>%
+          add_trace(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
+                    hovertext = ~mz1, hoverinfo = "text", width = 0.05) %>% 
+          add_text(x = ~mz, y = ~int,
+                   text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
+                   textposition = 'top') %>% 
+          layout(title = 'MS/MS Spectrum', showlegend = FALSE,
+                 xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
+                 yaxis = list(
+                   title = "intensity", 
+                   range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
+      ))
     }
-    tmp_dt$mz1[(tmp_dt$int / max(tmp_dt$int) < 0.05) & is.na(tmp_dt$ann)] <- ""
-    tmp_dt$ann[is.na(tmp_dt$ann)] <- ""
-    
-    print(htmltools::tagList(
-      plot_ly(data = tmp_dt, x = ~mz, y = ~int, type = "bar", 
-              hovertext = ~mz1, hoverinfo = "text") %>% 
-        add_text(text = paste(tmp_dt$mz1, "\n", tmp_dt$ann), hoverinfo = 'none', 
-                 textposition = 'top') %>% 
-        layout(title = 'MS/MS Spectrum', showlegend = FALSE,
-               xaxis = list(title = "m/z", range = list(50, precursorMz(tmp_sps))), 
-               yaxis = list(
-                 title = "intensity", 
-                 range = list(0, max(tmp_dt$int) + max(tmp_dt$int)*10/100)))
-    ))
   }
 }
 ```
@@ -147,22 +157,24 @@ for(k in seq(length(do))){
   a <- unique(tmp_sps2$adduct)
   for(l in seq(length(a))){
     tmp_sps3 <- tmp_sps2[tmp_sps2$adduct == a[l],]
+    tmp_sps3 <- tmp_sps3[order(rtime(tmp_sps3))]
     chr <- chromatogram(ms1, mz = mean(precursorMz(tmp_sps3)) + 0.01 * c(-1, 1))
     dt1 <- data.frame(rt = rtime(chr[[1]]), 
                       int = intensity(chr[[1]]))
     dt1$int[is.na(dt1$int)] <- 0
     dt2 <- data.frame(rt = rtime(tmp_sps3))
     dt2$int <- dt1$int[closest(dt2$rt, dt1$rt)]
-    
+    cat(paste0(
+          basename(do[k]), ": ", round(mean(precursorMz(tmp_sps3)), 4), 
+          " ", tmp_sps3$adduct[1]))
     print(htmltools::tagList(
       plot_ly(data = dt1, x = ~rt/60, y = ~int, mode = "lines", 
               type = "scatter") %>% 
         add_trace(data = dt2, x = ~rt/60, y = ~int, mode = "markers", 
                   text= paste("Scan N.", tmp_sps3$scanIndex)) %>% 
-        layout(title = paste0(
-          basename(do[k]), ": ", round(mean(precursorMz(tmp_sps3)), 4)), 
-               yaxis = list(title = "intensity"), 
-               xaxis = list(title = "RT (min)"), showlegend = FALSE)
+        layout(title = "EIC", 
+          yaxis = list(title = "intensity"), 
+          xaxis = list(title = "RT (min)"), showlegend = FALSE)
     ))
     
     for(j in seq(length(tmp_sps3))){
