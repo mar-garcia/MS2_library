@@ -396,12 +396,15 @@ ions &lt;- data.frame(rbind(
   c(&quot;[Tyr+H-H2O-CO]+&quot;, mass2mz(calculateMass(subtractElements(&quot;C9H11NO3&quot;, &quot;H2OCO&quot;)), &quot;[M+H]+&quot;), 1),
   c(&quot;Flavonoid 1,3A+&quot;, mass2mz(calculateMass(&quot;C7H4O4&quot;), &quot;[M+H]+&quot;), 1),
   
+  c(&quot;[Ala-H]-&quot;, mass2mz(calculateMass(&quot;C3H7NO2&quot;), &quot;[M-H]-&quot;), 0),
+  c(&quot;[Glu-H-NH3]-&quot;, mass2mz(calculateMass(subtractElements(&quot;C5H10N2O3&quot;, &quot;NH3&quot;)), &quot;[M-H]-&quot;), 0),
   c(&quot;[Phe-H]-&quot;, mass2mz(calculateMass(&quot;C9H11NO2&quot;), &quot;[M-H]-&quot;), 0),
   c(&quot;[Phe-H-NH3]-&quot;, mass2mz(calculateMass(subtractElements(&quot;C9H11NO2&quot;, &quot;NH3&quot;)), &quot;[M-H]-&quot;), 0),
   c(&quot;[Pro-H]-&quot;, mass2mz(calculateMass(&quot;C5H9NO2&quot;), &quot;[M-H]-&quot;), 0),
   c(&quot;[Pro-H-H2O]-&quot;, mass2mz(calculateMass(subtractElements(&quot;C5H9NO2&quot;, &quot;H2O&quot;)), &quot;[M-H]-&quot;), 0),
   c(&quot;[Tyr-H]-&quot;, mass2mz(calculateMass(&quot;C9H11NO3&quot;), &quot;[M-H]-&quot;), 0),
-  c(&quot;[Tyr-H-NH3]-&quot;, mass2mz(calculateMass(subtractElements(&quot;C9H11NO3&quot;, &quot;NH3&quot;)), &quot;[M-H]-&quot;), 0)
+  c(&quot;[Tyr-H-NH3]-&quot;, mass2mz(calculateMass(subtractElements(&quot;C9H11NO3&quot;, &quot;NH3&quot;)), &quot;[M-H]-&quot;), 0),
+  c(&quot;[Val-H]-&quot;, mass2mz(calculateMass(&quot;C5H11NO2&quot;), &quot;[M-H]-&quot;), 0)
 ))
 
 colnames(nl) &lt;- colnames(ions) &lt;- c(&quot;name&quot;, &quot;mass&quot;, &quot;polarity&quot;)
@@ -413,14 +416,153 @@ cmps &lt;- compounds(cdb, c(&quot;compound_id&quot;, &quot;name&quot;, &quot;for
 
 m &lt;- unique(sps$compound_id)
 
-#i &lt;- which(m == &quot;M0032&quot;)
-for(i in seq(length(m))){
-  if(!any(grepl(m[i], list.files(&quot;molecule/&quot;)))){
+i &lt;- which(m == &quot;M0028&quot;)
+#for(i in seq(length(m))){
+#  if(!any(grepl(m[i], list.files(&quot;molecule/&quot;)))){
     rmarkdown::render(&quot;M0000.Rmd&quot;, 
                     params = list(metabolite = m[i]),
-                    output_file = paste0(&quot;molecule/&quot;, m[i]))
-  }
-}</code></pre>
+                    output_file = paste0(&quot;molecule/&quot;, m[i]))</code></pre>
+<pre><code>## 
+## 
+## processing file: M0000.Rmd</code></pre>
+<pre><code>## 
+  |                                                                            
+  |                                                                      |   0%
+  |                                                                            
+  |........                                                              |  11%
+##   ordinary text without R code
+## 
+## 
+  |                                                                            
+  |................                                                      |  22%
+## label: setup (with options) 
+## List of 1
+##  $ include: logi FALSE
+## 
+## 
+  |                                                                            
+  |.......................                                               |  33%
+##   ordinary text without R code
+## 
+## 
+  |                                                                            
+  |...............................                                       |  44%
+## label: unnamed-chunk-1</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;plotly&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
+## 
+##     last_plot</code></pre>
+<pre><code>## The following object is masked from &#39;package:S4Vectors&#39;:
+## 
+##     rename</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre><code>## The following object is masked from &#39;package:graphics&#39;:
+## 
+##     layout</code></pre>
+<pre><code>## Loading required package: BiocParallel</code></pre>
+<pre><code>## Loading required package: ProtGenerics</code></pre>
+<pre><code>## 
+## Attaching package: &#39;ProtGenerics&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     smooth</code></pre>
+<pre><code>## 
+## Attaching package: &#39;Spectra&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:ProtGenerics&#39;:
+## 
+##     addProcessing</code></pre>
+<pre><code>## The following object is masked from &#39;package:plotly&#39;:
+## 
+##     export</code></pre>
+<pre><code>## Loading required package: MSnbase</code></pre>
+<pre><code>## Loading required package: Biobase</code></pre>
+<pre><code>## Welcome to Bioconductor
+## 
+##     Vignettes contain introductory material; view with
+##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
+##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.</code></pre>
+<pre><code>## Loading required package: mzR</code></pre>
+<pre><code>## Loading required package: Rcpp</code></pre>
+<pre><code>## 
+## This is MSnbase version 2.22.0 
+##   Visit https://lgatto.github.io/MSnbase/ to get started.</code></pre>
+<pre><code>## 
+## Attaching package: &#39;MSnbase&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:Spectra&#39;:
+## 
+##     combineSpectra, pickPeaks, plotMzDelta, spectrapply</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     trimws</code></pre>
+<pre><code>## 
+## This is xcms version 3.18.0</code></pre>
+<pre><code>## 
+## Attaching package: &#39;xcms&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:Spectra&#39;:
+## 
+##     estimatePrecursorIntensity, ppm</code></pre>
+<pre><code>## The following object is masked from &#39;package:plotly&#39;:
+## 
+##     groups</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     sigma</code></pre>
+<pre><code>## 
+## Attaching package: &#39;MsCoreUtils&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:xcms&#39;:
+## 
+##     bin, group, noise, ppm, rla, rowRla, smooth</code></pre>
+<pre><code>## The following objects are masked from &#39;package:MSnbase&#39;:
+## 
+##     bin, common, formatRt, smooth</code></pre>
+<pre><code>## The following objects are masked from &#39;package:Spectra&#39;:
+## 
+##     bin, smooth</code></pre>
+<pre><code>## The following objects are masked from &#39;package:ProtGenerics&#39;:
+## 
+##     bin, smooth</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     smooth</code></pre>
+<pre><code>## 
+  |                                                                            
+  |.......................................                               |  56%
+##    inline R code fragments
+## 
+## 
+  |                                                                            
+  |...............................................                       |  67%
+## label: unnamed-chunk-2 (with options) 
+## List of 2
+##  $ comment: logi NA
+##  $ results: chr &quot;asis&quot;
+## 
+## 
+  |                                                                            
+  |......................................................                |  78%
+##   ordinary text without R code
+## 
+## 
+  |                                                                            
+  |..............................................................        |  89%
+## label: unnamed-chunk-3 (with options) 
+## List of 1
+##  $ results: chr &quot;asis&quot;
+## 
+## 
+  |                                                                            
+  |......................................................................| 100%
+##    inline R code fragments</code></pre>
+<pre><code>## output file: M0000.knit.md</code></pre>
+<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0028.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\Rtmpu0WwKx\rmarkdown-str2f5c40055b3c.html&quot;</code></pre>
+<pre><code>## 
+## Output created: molecule/M0028.html</code></pre>
+<pre class="r"><code>#  }
+#}</code></pre>
 
 
 
