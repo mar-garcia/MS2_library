@@ -29,13 +29,13 @@ plot_ly(values = c(length(unique(sps$compound_id)),
 # MS2 spectras
 
 ```{r}
-tmp <- data.frame(table(sps$compound_id[sps$raw_spectra == 1]))
+tmp <- data.frame(table(sps$compound_id[sps$raw_spectra == 0]))
 tmp <- data.frame(table(tmp$Freq))
 fig1 <- plot_ly(data = tmp, x = ~Var1, y = ~Freq, type = "bar")%>% 
   layout(xaxis = list(title = "number of spectra"),
          yaxis = list(title = "number of molecules"))
 
-tmp <- data.frame(table(sps$adduct[sps$raw_spectra == 1]))
+tmp <- data.frame(table(sps$adduct[sps$raw_spectra == 0]))
 fig2 <- plot_ly(data = tmp, x = ~Var1, y = ~Freq, type = "bar") %>% 
   layout(xaxis = list(title = "adduct"),
          yaxis = list(title = "number of spectra"))
@@ -97,6 +97,39 @@ cid$parent[cid$name %in% c(
   "Acetylornithine", "N-Carbamyl-L-glutamic acid", "N-(2-Furoyl)glycine",
   "Hydroxyarginine")] <- "Aminoacids"
 
+
+library(networkD3)
+library(dplyr)
+
+cid$class[cid$name %in% c("Trigonelline")] <- "x1"
+cid$subclass[cid$name %in% c("Trigonelline")] <- "x2"
+cid$subclass[cid$name %in% c("Apigenin")] <- "x3"
+cid$parent[cid$name %in% c("Trigonelline")] <- "Alkaloids"
+
+
+links2 <- data.frame(table(cid$superclass, cid$class))
+tmp <- data.frame(table(cid$class, cid$subclass))
+colnames(links2) <- colnames(tmp) <- c("source", "target", "value")
+links2 <- rbind(links2, tmp)
+tmp <- data.frame(table(cid$subclass, cid$parent))
+colnames(tmp) <- c("source", "target", "value")
+links2 <- rbind(links2, tmp)
+links2 <- links2[links2$value > 0, ]
+nodes <- data.frame(
+  name=c(as.character(links2$source), 
+         as.character(links2$target)) %>% unique()
+)
+links2$IDsource <- match(links2$source, nodes$name)-1 
+links2$IDtarget <- match(links2$target, nodes$name)-1
+sankeyNetwork(Links = links2, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value", NodeID = "name", 
+              sinksRight=FALSE)
+
+```
+
+
+```{r, eval = FALSE}
 tmp <- data.frame(table(cid$superclass))
 plot_ly(values = tmp$Freq, labels = tmp$Var1, type = 'pie') %>%
   layout(title = "Superclass")
