@@ -95,7 +95,8 @@ cid$parent[cid$name %in% c(
   "Alanine", "Aspartic acid", "Glutamine", "Leucine", "Isoleucine", "Lysine",
   "Phenylalanine", "Serine", "Valine", 
   "Acetylornithine", "N-Carbamyl-L-glutamic acid", "N-(2-Furoyl)glycine",
-  "Hydroxyarginine")] <- "Aminoacids"
+  "Hydroxyarginine", "Hypaphorine", "L-Pipecolic acid", "S-Methyl-L-Cysteine"
+  )] <- "Aminoacids"
 
 
 library(networkD3)

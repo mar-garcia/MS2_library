@@ -19,6 +19,7 @@ nl <- data.frame(rbind(
   c("[M+H-H2O-NH3]+", calculateMass("H2ONH3"), 1),
   c("[M+H-H2O-CO]+", calculateMass("H2OCO"), 1),
   c("[M+H-NH3]+", calculateMass("NH3"), 1),
+  c("[M+H-C3H9N]+", calculateMass("C3H9N"), 1),
   c("[M+H-Glu]+", calculateMass(subtractElements("C5H9NO4", "H2O")), 1),
   c("[M+H-Gly]+", calculateMass(subtractElements("C2H5NO2", "H2O")), 1),
   c("[M+H-Gly-H2O]+", calculateMass("C2H5NO2"), 1),
@@ -28,7 +29,9 @@ nl <- data.frame(rbind(
   c("[M-H-CO2]-", calculateMass("CO2"), 0),
   c("[M-H-C2H2O]-", calculateMass("C2H2O"), 0),
   c("[M-H-C2H4O]-", calculateMass("C2H4O"), 0),
-  c("[M-H-CONH]-", calculateMass("CONH"), 0)
+  c("[M-H-C2H4O2]-", calculateMass("C2H4O2"), 0),
+  c("[M-H-CONH]-", calculateMass("CONH"), 0),
+  c("[M-H-C3H9N]-", calculateMass("C3H9N"), 0)
 ))
 
 ions <- data.frame(rbind(
@@ -69,12 +72,12 @@ cmps <- compounds(cdb, c("compound_id", "name", "formula", "exactmass"))
 
 m <- unique(sps$compound_id)
 
-i <- which(m == "M0004")
+i <- which(m == "M0047")
 #for(i in seq(length(m))){
 #  if(!any(grepl(m[i], list.files("molecule/")))){
-    rmarkdown::render("M0000.Rmd", 
-                    params = list(metabolite = m[i]),
-                    output_file = paste0("molecule/", m[i]))
+rmarkdown::render("M0000.Rmd", 
+                  params = list(metabolite = m[i]),
+                  output_file = paste0("molecule/", m[i]))
 #  }
 #}
 ```

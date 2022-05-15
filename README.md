@@ -9,6 +9,7 @@ With the following link you can see the information of the compounds included in
 - [Library statistics](stats.html)  
 
 Compound classification is based on [ClassyFire](http://classyfire.wishartlab.com/).   
-  
-    
-This site is inspired by the [EMBL - Metabolomics Core Facility Spectral Library](https://curatr.mcf.embl.de/).
+<br>
+Follow the specified [protocol](instructions.html) to add new entries into the database.  
+<br>
+This site is inspired by the [EMBL - Metabolomics Core Facility Spectral Library](https://curatr.mcf.embl.de/).  

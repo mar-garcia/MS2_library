@@ -374,6 +374,7 @@ library(MetaboCoreUtils)</code></pre>
   c(&quot;[M+H-H2O-NH3]+&quot;, calculateMass(&quot;H2ONH3&quot;), 1),
   c(&quot;[M+H-H2O-CO]+&quot;, calculateMass(&quot;H2OCO&quot;), 1),
   c(&quot;[M+H-NH3]+&quot;, calculateMass(&quot;NH3&quot;), 1),
+  c(&quot;[M+H-C3H9N]+&quot;, calculateMass(&quot;C3H9N&quot;), 1),
   c(&quot;[M+H-Glu]+&quot;, calculateMass(subtractElements(&quot;C5H9NO4&quot;, &quot;H2O&quot;)), 1),
   c(&quot;[M+H-Gly]+&quot;, calculateMass(subtractElements(&quot;C2H5NO2&quot;, &quot;H2O&quot;)), 1),
   c(&quot;[M+H-Gly-H2O]+&quot;, calculateMass(&quot;C2H5NO2&quot;), 1),
@@ -383,7 +384,9 @@ library(MetaboCoreUtils)</code></pre>
   c(&quot;[M-H-CO2]-&quot;, calculateMass(&quot;CO2&quot;), 0),
   c(&quot;[M-H-C2H2O]-&quot;, calculateMass(&quot;C2H2O&quot;), 0),
   c(&quot;[M-H-C2H4O]-&quot;, calculateMass(&quot;C2H4O&quot;), 0),
-  c(&quot;[M-H-CONH]-&quot;, calculateMass(&quot;CONH&quot;), 0)
+  c(&quot;[M-H-C2H4O2]-&quot;, calculateMass(&quot;C2H4O2&quot;), 0),
+  c(&quot;[M-H-CONH]-&quot;, calculateMass(&quot;CONH&quot;), 0),
+  c(&quot;[M-H-C3H9N]-&quot;, calculateMass(&quot;C3H9N&quot;), 0)
 ))
 
 ions &lt;- data.frame(rbind(
@@ -421,12 +424,12 @@ cmps &lt;- compounds(cdb, c(&quot;compound_id&quot;, &quot;name&quot;, &quot;for
 
 m &lt;- unique(sps$compound_id)
 
-i &lt;- which(m == &quot;M0004&quot;)
+i &lt;- which(m == &quot;M0047&quot;)
 #for(i in seq(length(m))){
 #  if(!any(grepl(m[i], list.files(&quot;molecule/&quot;)))){
-    rmarkdown::render(&quot;M0000.Rmd&quot;, 
-                    params = list(metabolite = m[i]),
-                    output_file = paste0(&quot;molecule/&quot;, m[i]))</code></pre>
+rmarkdown::render(&quot;M0000.Rmd&quot;, 
+                  params = list(metabolite = m[i]),
+                  output_file = paste0(&quot;molecule/&quot;, m[i]))</code></pre>
 <pre><code>## 
 ## 
 ## processing file: M0000.Rmd</code></pre>
@@ -563,9 +566,9 @@ i &lt;- which(m == &quot;M0004&quot;)
   |......................................................................| 100%
 ##    inline R code fragments</code></pre>
 <pre><code>## output file: M0000.knit.md</code></pre>
-<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0004.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\RtmpOwvk7E\rmarkdown-str2e703fb8254a.html&quot;</code></pre>
+<pre><code>## &quot;C:/Program Files/RStudio/bin/quarto/bin/pandoc&quot; +RTS -K512m -RTS M0000.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output molecule/M0047.html --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\pagebreak.lua&quot; --lua-filter &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmarkdown\lua\latex-div.lua&quot; --self-contained --variable bs3=TRUE --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template &quot;C:\Users\garciaalom\AppData\Local\R\win-library\4.2\rmarkdown\rmd\h\default.html&quot; --no-highlight --variable highlightjs=1 --variable theme=bootstrap --mathjax --variable &quot;mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; --include-in-header &quot;C:\Users\GARCIA~1\AppData\Local\Temp\RtmpWIdb9W\rmarkdown-str16401a83dd8.html&quot;</code></pre>
 <pre><code>## 
-## Output created: molecule/M0004.html</code></pre>
+## Output created: molecule/M0047.html</code></pre>
 <pre class="r"><code>#  }
 #}</code></pre>
 
