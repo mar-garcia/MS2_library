@@ -1,0 +1,50 @@
+---
+title: "Instructions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Steps
+  
+  1. Convert `.raw` files to `.mzML` format using the MSConvert software (Proteowizard) adding the filter `Peak Picking`      
+  2. Search if the compound is in the [list](CompoundDb.html)  
+  3. Check the RT and which is the main ion and annotate it in the csv file  
+  4. Search if there are MS2 and MSn:  
+    - if yes & if there is already and html file and new MS/MS to add:  
+      - delete html  
+      - remove previous MS/MS  
+  5. Run:  
+    - [compoundDB](CompoundDb.Rmd)  
+    - [molecules](molecules.Rmd)  
+    - [stats](stats.Rmd)  
+    - [compoundDB](CompoundDb.Rmd)  
+  
+<br>
+  
+# Folders to check   
+  
+`WATERS/experiments/`  
+  
+  * `Marynka Raw Files ORBITRAP`  
+    - `BARCELONA_MAR`  
+      - `standards`  
+        - `legumes`  
+          - <span style="color: red;">``peptides``</span>  
+          - <span style="color: red;">``reinnections_dedicated_method``</span>  
+          - <span style="color: blue;">``stds_varis``</span>
+        - <span style="color: red;">`...`</span>
+      - <span style="color: red;">`...`</span>
+    - `STD_LIBRARY` <span style="color: red;">`...`</span>  
+    - <span style="color: red;">`...`</span>
+  * `orbitrap_raw_files` <span style="color: red;">`...`</span>
+  * <span style="color: red;">`...`</span>
+  
+<span style="color: red;">`...`</span> Indicates that the other folders contained in that one still have to be checked.  
+<span style="color: blue;">`abcdef`</span> Indicates that what it is inside that folder (and subfolders) is already checked.  
+  
+<br>
+  
+**Last update:** `r format(Sys.time(), "%d %b %Y")`
